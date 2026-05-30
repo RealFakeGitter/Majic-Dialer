@@ -7,4 +7,10 @@
     <color name="nova_card">#F3F5F7</color>
     <color name="nova_action_button">#E7F0FF</color>
     <color name="nova_amoled_black">#000000</color>
+    <color name="color_primary">#000000</color>
+    <color name="color_primary_dark">#000000</color>
+    <color name="color_background">#000000</color>
+    <color name="color_secondary">#FFFFFF</color>
+    <color name="color_on_secondary">#000000</color>
+    <color name="white">#FFFFFF</color>
 </resources>
