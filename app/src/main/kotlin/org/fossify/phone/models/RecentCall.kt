@@ -37,4 +37,8 @@ data class RecentCall(
             false
         }
     }
+
+    fun getTotalCallCount(): Int {
+        return (groupedCalls?.size ?: 1)
+    }
 }

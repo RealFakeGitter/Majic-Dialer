@@ -7,12 +7,14 @@ import android.provider.CallLog.Calls
 import android.provider.CallLog.Calls.PRESENTATION_UNAVAILABLE
 import android.provider.CallLog.Calls.PRESENTATION_UNKNOWN
 import android.telephony.PhoneNumberUtils
+import android.util.Log
 import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.*
 import org.fossify.commons.models.contacts.Contact
 import org.fossify.phone.R
 import org.fossify.phone.activities.SimpleActivity
 import org.fossify.phone.extensions.getAvailableSIMCardLabels
+import org.fossify.phone.models.CallLogItem
 import org.fossify.phone.models.RecentCall
 import org.fossify.phone.models.SIMAccount
 
@@ -20,6 +22,7 @@ class RecentsHelper(private val context: Context) {
     companion object {
         private const val COMPARABLE_PHONE_NUMBER_LENGTH = 9
         const val QUERY_LIMIT = 100
+        private const val TAG = "RecentsHelper_Perf"
     }
 
     private val contentUri = Calls.CONTENT_URI
@@ -36,7 +39,7 @@ class RecentsHelper(private val context: Context) {
             return
         }
 
-        ContactsHelper(context).getContacts(getAll = true, showOnlyContactsWithNumbers = true) { contacts ->
+            ContactsCache.getContacts(context) { contacts ->
             ensureBackgroundThread {
                 val privateContacts = MyContactsContentProvider.getContacts(context, privateCursor)
                 if (privateContacts.isNotEmpty()) {
@@ -78,12 +81,87 @@ class RecentsHelper(private val context: Context) {
     fun getGroupedRecentCalls(
         previousRecents: List<RecentCall> = ArrayList(),
         queryLimit: Int = QUERY_LIMIT,
-        callback: (List<RecentCall>) -> Unit,
+        callback: (List<CallLogItem>) -> Unit,
     ) {
-        getRecentCalls(previousRecents, queryLimit) { recentCalls ->
-            callback(
-                groupSubsequentCalls(calls = recentCalls)
-            )
+        val appStartTime = System.currentTimeMillis()
+        Log.d(TAG, "[APP_START] Starting getGroupedRecentCalls at $appStartTime")
+        
+        val privateCursor = context.getMyContactsCursor(favoritesOnly = false, withPhoneNumbersOnly = true)
+        if (!context.hasPermission(PERMISSION_READ_CALL_LOG)) {
+            Log.d(TAG, "[PERMISSION] No call log permission")
+            callback(emptyList())
+            return
+        }
+
+            ContactsCache.getContacts(context) { contacts ->
+            val contactsLoadTime = System.currentTimeMillis()
+            Log.d(TAG, "[CONTACTS_LOADED] ContactsHelper returned ${contacts.size} contacts in ${contactsLoadTime - appStartTime}ms")
+            
+            ensureBackgroundThread {
+                val privateContacts = MyContactsContentProvider.getContacts(context, privateCursor)
+                if (privateContacts.isNotEmpty()) {
+                    contacts.addAll(privateContacts)
+                }
+                Log.d(TAG, "[PRIVATE_CONTACTS] Added ${privateContacts.size} private contacts, total now: ${contacts.size}")
+
+                this.queryLimit = queryLimit
+                
+                val recentsStartTime = System.currentTimeMillis()
+                val recentCalls = if (previousRecents.isNotEmpty()) {
+                    val previousRecentCalls = previousRecents
+                        .flatMap { it.groupedCalls ?: listOf(it) }
+                        .map { it.copy(groupedCalls = null) }
+
+                    val newerRecents = getRecents(
+                        contacts = contacts,
+                        selection = "${Calls.DATE} > ?",
+                        selectionParams = arrayOf("${previousRecentCalls.first().startTS}")
+                    )
+
+                    val olderRecents = getRecents(
+                        contacts = contacts,
+                        selection = "${Calls.DATE} < ?",
+                        selectionParams = arrayOf("${previousRecentCalls.last().startTS}")
+                    )
+
+                    newerRecents + previousRecentCalls + olderRecents
+                } else {
+                    getRecents(contacts)
+                }
+                
+                val recentsLoadTime = System.currentTimeMillis()
+                Log.d(TAG, "[RECENTS_FETCHED] getRecents returned ${recentCalls.size} calls in ${recentsLoadTime - recentsStartTime}ms (total ${recentsLoadTime - appStartTime}ms)")
+
+                val sortedCalls = recentCalls
+                    .sortedByDescending { it.startTS }
+                    .distinctBy { it.id }
+                Log.d(TAG, "[SORTED] Sorted and deduped to ${sortedCalls.size} calls in ${System.currentTimeMillis() - recentsLoadTime}ms")
+
+                val groupingStartTime = System.currentTimeMillis()
+                val groupedCalls = groupSubsequentCalls(calls = sortedCalls)
+                val groupingEndTime = System.currentTimeMillis()
+                Log.d(TAG, "[GROUPED] groupSubsequentCalls completed in ${groupingEndTime - groupingStartTime}ms (total ${groupingEndTime - appStartTime}ms), result: ${groupedCalls.size} groups")
+                
+                val ignoredSources = context.baseConfig.ignoredContactSources
+                val filterStartTime = System.currentTimeMillis()
+                val filteredCalls = if (SMT_PRIVATE in ignoredSources) {
+                    val privateNumbers = privateContacts.flatMap { it.phoneNumbers }.map { it.value }
+                    groupedCalls.filterNot { it.phoneNumber in privateNumbers }
+                } else {
+                    groupedCalls
+                }
+                Log.d(TAG, "[FILTERED] Filtered to ${filteredCalls.size} calls in ${System.currentTimeMillis() - filterStartTime}ms")
+
+                val dateGroupStartTime = System.currentTimeMillis()
+                val finalResult = groupCallsByDate(filteredCalls)
+                val dateGroupEndTime = System.currentTimeMillis()
+                Log.d(TAG, "[DATE_GROUPED] groupCallsByDate completed in ${dateGroupEndTime - dateGroupStartTime}ms")
+                
+                val totalTime = dateGroupEndTime - appStartTime
+                Log.d(TAG, "[TOTAL] Total execution time: ${totalTime}ms | Contacts: ${contactsLoadTime - appStartTime}ms | Recents: ${recentsLoadTime - recentsStartTime}ms | Grouping: ${groupingEndTime - groupingStartTime}ms | DateGroup: ${dateGroupEndTime - dateGroupStartTime}ms")
+                
+                callback(finalResult)
+            }
         }
     }
 
@@ -98,7 +176,7 @@ class RecentsHelper(private val context: Context) {
         }
 
         val privateCursor = context.getMyContactsCursor(favoritesOnly = false, withPhoneNumbersOnly = true)
-        ContactsHelper(context).getContacts(getAll = true, showOnlyContactsWithNumbers = true) { contacts ->
+            ContactsCache.getContacts(context) { contacts ->
             ensureBackgroundThread {
                 val privateContacts = MyContactsContentProvider.getContacts(context, privateCursor)
                 if (privateContacts.isNotEmpty()) {
@@ -131,40 +209,63 @@ class RecentsHelper(private val context: Context) {
     }
 
     private fun shouldGroupCalls(callA: RecentCall, callB: RecentCall): Boolean {
-        val differentSim = callA.simID != callB.simID
-        val differentDay = callA.dayCode != callB.dayCode
+        // Group calls from the same contact regardless of day or SIM
+        // Only require phone number match
         val namesAreBothRealAndDifferent =
             callA.name != callB.name &&
                     callA.name != callA.phoneNumber &&
                     callB.name != callB.phoneNumber
 
-        if (differentSim || differentDay || namesAreBothRealAndDifferent) return false
+        if (namesAreBothRealAndDifferent) return false
 
         @Suppress("DEPRECATION")
         return PhoneNumberUtils.compare(callA.phoneNumber, callB.phoneNumber)
     }
 
     private fun groupSubsequentCalls(calls: List<RecentCall>): List<RecentCall> {
-        val result = mutableListOf<RecentCall>()
-        if (calls.isEmpty()) return result
+        if (calls.isEmpty()) return emptyList()
 
-        var currentCall = calls[0]
-        for (i in 1 until calls.size) {
-            val nextCall = calls[i]
-            if (shouldGroupCalls(currentCall, nextCall)) {
-                if (currentCall.groupedCalls.isNullOrEmpty()) {
-                    currentCall = currentCall.copy(groupedCalls = mutableListOf(currentCall))
-                }
-
-                currentCall.groupedCalls?.add(nextCall)
+        val startTime = System.currentTimeMillis()
+        var comparisonCount = 0
+        
+        // Group all calls by phone number, not just sequential ones
+        val groupedByNumber = mutableMapOf<String, MutableList<RecentCall>>()
+        
+        for (call in calls) {
+            // Find if we already have a group for this phone number
+            val existingGroup = groupedByNumber.values.find { group ->
+                comparisonCount++
+                @Suppress("DEPRECATION")
+                PhoneNumberUtils.compare(group[0].phoneNumber, call.phoneNumber)
+            }
+            
+            if (existingGroup != null) {
+                existingGroup.add(call)
             } else {
-                result += currentCall
-                currentCall = nextCall
+                groupedByNumber[call.phoneNumber] = mutableListOf(call)
             }
         }
 
-        result.add(currentCall)
-        return result
+        // Convert to result: latest call as parent, rest as groupedCalls
+        val result = mutableListOf<RecentCall>()
+        for ((_, callsForNumber) in groupedByNumber) {
+            val sortedByTime = callsForNumber.sortedByDescending { it.startTS }
+            val latestCall = sortedByTime[0]
+            
+            result.add(
+                if (sortedByTime.size > 1) {
+                    latestCall.copy(groupedCalls = sortedByTime.toMutableList())
+                } else {
+                    latestCall
+                }
+            )
+        }
+
+        // Sort result by latest call timestamp descending
+        val elapsed = System.currentTimeMillis() - startTime
+        Log.d(TAG, "[GROUPING_DETAIL] Grouped ${calls.size} calls into ${result.size} groups | ${comparisonCount} comparisons | ${elapsed}ms")
+        
+        return result.sortedByDescending { it.startTS }
     }
 
     @SuppressLint("NewApi")
@@ -173,6 +274,9 @@ class RecentsHelper(private val context: Context) {
         selection: String? = null,
         selectionParams: Array<String>? = null,
     ): List<RecentCall> {
+        val startTime = System.currentTimeMillis()
+        Log.d(TAG, "[GETRECENTS_START] Starting with ${contacts.size} contacts, selection: $selection")
+        
         val recentCalls = mutableListOf<RecentCall>()
         var previousStartTS = 0L
         val contactsNumbersMap = HashMap<String, String>()
@@ -323,8 +427,13 @@ class RecentsHelper(private val context: Context) {
 
         val blockedNumbers = context.getBlockedNumbers()
 
-        return recentCalls
+        val result = recentCalls
             .filter { !context.isNumberBlocked(it.phoneNumber, blockedNumbers) }
+        
+        val elapsed = System.currentTimeMillis() - startTime
+        Log.d(TAG, "[GETRECENTS_END] getRecents completed in ${elapsed}ms | Processed ${recentCalls.size} calls | Blocked ${recentCalls.size - result.size} | Final: ${result.size}")
+        
+        return result
     }
 
     fun removeRecentCalls(ids: List<Int>, callback: () -> Unit) {
@@ -371,6 +480,22 @@ class RecentsHelper(private val context: Context) {
                 }
             }
         }
+    }
+
+    private fun groupCallsByDate(recentCalls: List<RecentCall>): List<CallLogItem> {
+        val callLog = mutableListOf<CallLogItem>()
+        var lastDayCode = ""
+        for (call in recentCalls) {
+            val currentDayCode = call.dayCode
+            if (currentDayCode != lastDayCode) {
+                callLog += CallLogItem.Date(timestamp = call.startTS, dayCode = currentDayCode)
+                lastDayCode = currentDayCode
+            }
+
+            callLog += call
+        }
+
+        return callLog
     }
 }
 

@@ -14,6 +14,7 @@ import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.hasPermission
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.viewBinding
+import org.fossify.commons.extensions.formatDateOrTime
 import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.commons.helpers.PERMISSION_READ_CALL_LOG
 import org.fossify.commons.helpers.SimpleContactsHelper
@@ -93,13 +94,25 @@ class ContactCallHistoryActivity : SimpleActivity() {
             return
         }
 
-        RecentsHelper(this).getRecentCallsForNumber(seedCall) { calls ->
-            runOnUiThread {
-                binding.progressIndicator.hide()
-                val callsToShow = calls.ifEmpty { listOf(seedCall) }
-                bindHeader(callsToShow.first(), callsToShow)
-                adapter.submitItems(groupCallsByDate(callsToShow))
-                binding.contactCallHistoryPlaceholder.beGone()
+        // First try to use grouped calls from seedCall if available
+        val groupedCalls = seedCall.groupedCalls
+        if (!groupedCalls.isNullOrEmpty()) {
+            // Use grouped calls sorted by timestamp descending
+            val callsToShow = groupedCalls.sortedByDescending { it.startTS }
+            binding.progressIndicator.hide()
+            bindHeader(callsToShow.first(), callsToShow)
+            adapter.submitItems(groupCallsByDate(callsToShow))
+            binding.contactCallHistoryPlaceholder.beGone()
+        } else {
+            // Fallback: load from database
+            RecentsHelper(this).getRecentCallsForNumber(seedCall) { calls ->
+                runOnUiThread {
+                    binding.progressIndicator.hide()
+                    val callsToShow = calls.ifEmpty { listOf(seedCall) }
+                    bindHeader(callsToShow.first(), callsToShow)
+                    adapter.submitItems(groupCallsByDate(callsToShow))
+                    binding.contactCallHistoryPlaceholder.beGone()
+                }
             }
         }
     }
