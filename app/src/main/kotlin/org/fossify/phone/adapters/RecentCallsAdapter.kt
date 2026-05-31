@@ -6,6 +6,7 @@ import android.graphics.drawable.Drawable
 import android.provider.CallLog.Calls
 import android.text.SpannableString
 import android.text.TextUtils
+import android.util.Log
 import android.util.TypedValue
 import android.view.ContextThemeWrapper
 import android.view.Gravity
@@ -198,10 +199,12 @@ class RecentCallsAdapter(
     }
 
     override fun submitList(list: List<CallLogItem>?) {
+        val startTime = System.currentTimeMillis()
         val layoutManager = recyclerView.layoutManager!!
         val recyclerViewState = layoutManager.onSaveInstanceState()
         super.submitList(list) {
             layoutManager.onRestoreInstanceState(recyclerViewState)
+            Log.d("RecentCallsAdapter_Perf", "[PERF_RV_UPDATE] RecyclerView diffing and update took ${System.currentTimeMillis() - startTime}ms for ${list?.size ?: 0} items")
         }
     }
 
@@ -514,16 +517,56 @@ class RecentCallsAdapter(
                     nameToShow = SpannableString("$name - ${call.specificType}")
                 }
 
-                if (call.groupedCalls != null) {
-                    nameToShow = SpannableString("$nameToShow (${call.groupedCalls.size})")
-                }
-
                 if (textToHighlight.isNotEmpty() && nameToShow.contains(textToHighlight, true)) {
                     nameToShow = SpannableString(nameToShow.toString().highlightTextPart(textToHighlight, properPrimaryColor))
                 }
 
+                val consecutiveMissed = if (call.type == Calls.MISSED_TYPE) {
+                    val grouped = call.groupedCalls
+                    if (grouped != null) {
+                        var count = 0
+                        for (c in grouped) {
+                            if (c.type == Calls.MISSED_TYPE) {
+                                count++
+                            } else {
+                                break
+                            }
+                        }
+                        count
+                    } else {
+                        1
+                    }
+                } else {
+                    0
+                }
+
+                var finalNameToShow: CharSequence = nameToShow
+                if (consecutiveMissed >= 2) {
+                    val badgeText = "\nMissed ×$consecutiveMissed"
+                    val spannableBadge = SpannableString(badgeText)
+                    spannableBadge.setSpan(
+                        android.text.style.ForegroundColorSpan(missedCallColor),
+                        1, // Skip the newline character
+                        badgeText.length,
+                        android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    spannableBadge.setSpan(
+                        android.text.style.RelativeSizeSpan(0.75f),
+                        1, // Skip the newline character
+                        badgeText.length,
+                        android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    finalNameToShow = TextUtils.concat(nameToShow, spannableBadge)
+                }
+
                 itemRecentsName.apply {
-                    text = nameToShow
+                    setSingleLine(consecutiveMissed < 2)
+                    if (consecutiveMissed >= 2) {
+                        maxLines = 2
+                    } else {
+                        maxLines = 1
+                    }
+                    text = finalNameToShow
                     setTextColor(textColor)
                     setTextSize(TypedValue.COMPLEX_UNIT_PX, currentFontSize)
                     isSelected = true

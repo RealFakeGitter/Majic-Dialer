@@ -143,4 +143,8 @@ class Config(context: Context) : BaseConfig(context) {
     var alwaysShowFullscreen: Boolean
         get() = prefs.getBoolean(ALWAYS_SHOW_FULLSCREEN, false)
         set(alwaysShowFullscreen) = prefs.edit().putBoolean(ALWAYS_SHOW_FULLSCREEN, alwaysShowFullscreen).apply()
+
+    var cachedRecentCalls: String
+        get() = prefs.getString("cached_recent_calls", "") ?: ""
+        set(value) = prefs.edit().putString("cached_recent_calls", value).apply()
 }

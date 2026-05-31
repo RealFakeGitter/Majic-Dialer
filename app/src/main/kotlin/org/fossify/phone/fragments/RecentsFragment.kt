@@ -84,6 +84,16 @@ class RecentsFragment(
             allRecentCalls = emptyList()
         }
 
+        if (allRecentCalls.isEmpty() && searchQuery.isNullOrEmpty()) {
+            val startLoadCache = System.currentTimeMillis()
+            val cachedItems = recentsHelper.getCachedRecentCallItems()
+            if (cachedItems.isNotEmpty()) {
+                allRecentCalls = cachedItems
+                Log.d(TAG, "[PERF_CACHE_LOAD] Loaded ${cachedItems.size} items from cache in ${System.currentTimeMillis() - startLoadCache}ms")
+                gotRecents(cachedItems)
+            }
+        }
+
         // Load all recents at once - no staged loading
         refreshCallLog()
     }

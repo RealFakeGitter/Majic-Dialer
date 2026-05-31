@@ -14,6 +14,9 @@ import org.fossify.commons.models.contacts.Contact
 import org.fossify.phone.R
 import org.fossify.phone.activities.SimpleActivity
 import org.fossify.phone.extensions.getAvailableSIMCardLabels
+import org.fossify.phone.extensions.config
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
 import org.fossify.phone.models.CallLogItem
 import org.fossify.phone.models.RecentCall
 import org.fossify.phone.models.SIMAccount
@@ -27,6 +30,51 @@ class RecentsHelper(private val context: Context) {
 
     private val contentUri = Calls.CONTENT_URI
     private var queryLimit = QUERY_LIMIT
+
+    fun getCachedRecentCalls(): List<RecentCall> {
+        return try {
+            val jsonString = context.config.cachedRecentCalls
+            if (jsonString.isNotBlank()) {
+                Json.decodeFromString<List<RecentCall>>(jsonString)
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error reading cached recent calls", e)
+            emptyList()
+        }
+    }
+
+    fun getCachedRecentCallItems(): List<CallLogItem> {
+        val calls = getCachedRecentCalls()
+        return if (calls.isNotEmpty()) {
+            groupCallsByDate(calls)
+        } else {
+            emptyList()
+        }
+    }
+
+    fun cacheRecentCalls(calls: List<RecentCall>) {
+        ensureBackgroundThread {
+            try {
+                val callsToCache = calls.take(QUERY_LIMIT)
+                val jsonString = Json.encodeToString(callsToCache)
+                context.config.cachedRecentCalls = jsonString
+                Log.d(TAG, "[CACHE_WRITE] Cached ${callsToCache.size} recent calls")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error writing cached recent calls", e)
+            }
+        }
+    }
+
+    fun invalidateCache() {
+        try {
+            context.config.cachedRecentCalls = ""
+            Log.d(TAG, "[CACHE_INVALIDATE] Cache invalidated")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error invalidating cache", e)
+        }
+    }
 
     fun getRecentCalls(
         previousRecents: List<RecentCall> = ArrayList(),
@@ -133,6 +181,7 @@ class RecentsHelper(private val context: Context) {
                 val totalTime = dateGroupEndTime - appStartTime
                 Log.d(TAG, "[PERF_TOTAL] Total time: ${totalTime}ms (Contacts: ${contactsLoadTime - appStartTime}ms | Query: ${queryEndTime - queryStartTime}ms | Filter: ${System.currentTimeMillis() - filterStartTime}ms | DateGroup: ${dateGroupEndTime - dateGroupStartTime}ms)")
                 
+                cacheRecentCalls(filteredCalls)
                 callback(finalResult)
             }
         }
@@ -703,6 +752,7 @@ class RecentsHelper(private val context: Context) {
                 val selectionArgs = chunk.map { it.toString() }.toTypedArray()
                 context.contentResolver.delete(contentUri, selection, selectionArgs)
             }
+            invalidateCache()
             callback()
         }
     }
@@ -713,6 +763,7 @@ class RecentsHelper(private val context: Context) {
             if (it) {
                 ensureBackgroundThread {
                     context.contentResolver.delete(contentUri, null, null)
+                    invalidateCache()
                     callback()
                 }
             }
