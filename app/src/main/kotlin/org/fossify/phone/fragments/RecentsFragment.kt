@@ -48,9 +48,11 @@ class RecentsFragment(
     private var recentsHelper = RecentsHelper(context)
 
     override fun onFinishInflate() {
+        val startTime = System.currentTimeMillis()
         super.onFinishInflate()
         binding = FragmentRecentsBinding.bind(this)
         innerBinding = RecentsInnerBinding(binding)
+        Log.d("StartupPerf", "RecentsFragment onFinishInflate completed in ${System.currentTimeMillis() - startTime}ms")
     }
 
     override fun setupFragment() {
@@ -80,17 +82,32 @@ class RecentsFragment(
     }
 
     override fun refreshItems(invalidate: Boolean, callback: (() -> Unit)?) {
+        Log.d("StartupPerf", "[RECENTS_START] Recents loading started at ${System.currentTimeMillis()}")
         if (invalidate) {
             allRecentCalls = emptyList()
         }
 
         if (allRecentCalls.isEmpty() && searchQuery.isNullOrEmpty()) {
-            val startLoadCache = System.currentTimeMillis()
-            val cachedItems = recentsHelper.getCachedRecentCallItems()
-            if (cachedItems.isNotEmpty()) {
-                allRecentCalls = cachedItems
-                Log.d(TAG, "[PERF_CACHE_LOAD] Loaded ${cachedItems.size} items from cache in ${System.currentTimeMillis() - startLoadCache}ms")
-                gotRecents(cachedItems)
+            ensureBackgroundThread {
+                try {
+                    android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_FOREGROUND)
+                } catch (e: Exception) {
+                    // Ignore
+                }
+                val startLoadCache = System.currentTimeMillis()
+                val cachedItems = recentsHelper.getCachedRecentCallItems()
+                val loadTime = System.currentTimeMillis() - startLoadCache
+                Log.d(TAG, "[PERF_CACHE_LOAD_BG] Loaded ${cachedItems.size} items from cache in background in ${loadTime}ms")
+                if (cachedItems.isNotEmpty()) {
+                    val startPost = System.currentTimeMillis()
+                    activity?.runOnUiThread {
+                        if (allRecentCalls.isEmpty()) {
+                            allRecentCalls = cachedItems
+                            Log.d(TAG, "[PERF_CACHE_LOAD] Loaded ${cachedItems.size} items from cache in ${System.currentTimeMillis() - startLoadCache}ms (Post delay: ${System.currentTimeMillis() - startPost}ms)")
+                            gotRecents(cachedItems)
+                        }
+                    }
+                }
             }
         }
 
@@ -162,6 +179,7 @@ class RecentsFragment(
     }
 
     private fun gotRecents(recents: List<CallLogItem>) {
+        Log.d("StartupPerf", "[RECENTS_END] Recents processing finished at ${System.currentTimeMillis()} with ${recents.size} items")
         Log.d(TAG, "[UI_CALLBACK] gotRecents called with ${recents.size} items")
         binding.progressIndicator.hide()
         Log.d(TAG, "[UI_SPINNER_HIDDEN] Progress indicator hidden at ${System.currentTimeMillis()}")

@@ -204,7 +204,10 @@ class RecentCallsAdapter(
         val recyclerViewState = layoutManager.onSaveInstanceState()
         super.submitList(list) {
             layoutManager.onRestoreInstanceState(recyclerViewState)
-            Log.d("RecentCallsAdapter_Perf", "[PERF_RV_UPDATE] RecyclerView diffing and update took ${System.currentTimeMillis() - startTime}ms for ${list?.size ?: 0} items")
+            val endTime = System.currentTimeMillis()
+            Log.d("StartupPerf", "[ADAPTER_UPDATE] Adapter update completed at $endTime")
+            val totalTime = endTime - org.fossify.phone.activities.MainActivity.appStartTime
+            Log.d("StartupPerf", "[TOTAL_STARTUP] Total startup time: ${totalTime}ms")
         }
     }
 

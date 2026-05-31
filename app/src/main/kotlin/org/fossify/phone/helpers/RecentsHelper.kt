@@ -31,12 +31,47 @@ class RecentsHelper(private val context: Context) {
     private val contentUri = Calls.CONTENT_URI
     private var queryLimit = QUERY_LIMIT
 
+    private fun String.sanitize(): String {
+        return this.replace('\t', ' ').replace('\n', ' ')
+    }
+
     fun getCachedRecentCalls(): List<RecentCall> {
         return try {
-            val jsonString = context.config.cachedRecentCalls
-            if (jsonString.isNotBlank()) {
-                Json.decodeFromString<List<RecentCall>>(jsonString)
+            val startPref = System.currentTimeMillis()
+            val tsvString = context.config.cachedRecentCalls
+            val prefTime = System.currentTimeMillis() - startPref
+            
+            if (tsvString.isNotBlank()) {
+                val startDecode = System.currentTimeMillis()
+                val lines = tsvString.split("\n")
+                val result = ArrayList<RecentCall>(lines.size)
+                for (line in lines) {
+                    if (line.isBlank()) continue
+                    val parts = line.split("\t")
+                    if (parts.size >= 12) {
+                        result.add(
+                            RecentCall(
+                                id = parts[0].toIntOrNull() ?: 0,
+                                phoneNumber = parts[1],
+                                name = parts[2],
+                                photoUri = parts[3],
+                                startTS = parts[4].toLongOrNull() ?: 0L,
+                                duration = parts[5].toIntOrNull() ?: 0,
+                                type = parts[6].toIntOrNull() ?: 0,
+                                simID = parts[7].toIntOrNull() ?: -1,
+                                simColor = parts[8].toIntOrNull() ?: -1,
+                                specificNumber = parts[9],
+                                specificType = parts[10],
+                                isUnknownNumber = parts[11].toBoolean()
+                            )
+                        )
+                    }
+                }
+                val decodeTime = System.currentTimeMillis() - startDecode
+                Log.d(TAG, "[PERF_CACHE_DECODE] Read preference in ${prefTime}ms, decoded TSV in ${decodeTime}ms")
+                result
             } else {
+                Log.d(TAG, "[PERF_CACHE_DECODE] Preference was blank. Read preference in ${prefTime}ms")
                 emptyList()
             }
         } catch (e: Exception) {
@@ -48,7 +83,11 @@ class RecentsHelper(private val context: Context) {
     fun getCachedRecentCallItems(): List<CallLogItem> {
         val calls = getCachedRecentCalls()
         return if (calls.isNotEmpty()) {
-            groupCallsByDate(calls)
+            val startGroup = System.currentTimeMillis()
+            val result = groupCallsByDate(calls)
+            val groupTime = System.currentTimeMillis() - startGroup
+            Log.d(TAG, "[PERF_CACHE_GROUP] Grouped cached calls by date in ${groupTime}ms")
+            result
         } else {
             emptyList()
         }
@@ -58,8 +97,26 @@ class RecentsHelper(private val context: Context) {
         ensureBackgroundThread {
             try {
                 val callsToCache = calls.take(QUERY_LIMIT)
-                val jsonString = Json.encodeToString(callsToCache)
-                context.config.cachedRecentCalls = jsonString
+                val sb = StringBuilder()
+                for (i in callsToCache.indices) {
+                    val call = callsToCache[i]
+                    sb.append(call.id).append("\t")
+                      .append(call.phoneNumber.sanitize()).append("\t")
+                      .append(call.name.sanitize()).append("\t")
+                      .append(call.photoUri.sanitize()).append("\t")
+                      .append(call.startTS).append("\t")
+                      .append(call.duration).append("\t")
+                      .append(call.type).append("\t")
+                      .append(call.simID).append("\t")
+                      .append(call.simColor).append("\t")
+                      .append(call.specificNumber.sanitize()).append("\t")
+                      .append(call.specificType.sanitize()).append("\t")
+                      .append(call.isUnknownNumber)
+                    if (i < callsToCache.size - 1) {
+                        sb.append("\n")
+                    }
+                }
+                context.config.cachedRecentCalls = sb.toString()
                 Log.d(TAG, "[CACHE_WRITE] Cached ${callsToCache.size} recent calls")
             } catch (e: Exception) {
                 Log.e(TAG, "Error writing cached recent calls", e)
@@ -134,55 +191,67 @@ class RecentsHelper(private val context: Context) {
         val appStartTime = System.currentTimeMillis()
         Log.d(TAG, "[PERF_START] Starting getGroupedRecentCalls")
         
-        val privateCursor = context.getMyContactsCursor(favoritesOnly = false, withPhoneNumbersOnly = true)
         if (!context.hasPermission(PERMISSION_READ_CALL_LOG)) {
             Log.d(TAG, "[PERF_PERMISSION] No call log permission")
             callback(emptyList())
             return
         }
 
-        ContactsCache.getContacts(context) { contacts ->
-            val contactsLoadTime = System.currentTimeMillis()
-            Log.d(TAG, "[PERF_CONTACTS] Loaded ${contacts.size} contacts in ${contactsLoadTime - appStartTime}ms")
-            
-            ensureBackgroundThread {
-                val privateContacts = MyContactsContentProvider.getContacts(context, privateCursor)
-                if (privateContacts.isNotEmpty()) {
-                    contacts.addAll(privateContacts)
+        ensureBackgroundThread {
+            try {
+                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_FOREGROUND)
+            } catch (e: Exception) {
+                // Ignore
+            }
+            val privateCursor = context.getMyContactsCursor(favoritesOnly = false, withPhoneNumbersOnly = true)
+            ContactsCache.getContacts(context) { contacts ->
+                ensureBackgroundThread {
+                    try {
+                        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_FOREGROUND)
+                    } catch (e: Exception) {
+                        // Ignore
+                    }
+                    val contactsLoadTime = System.currentTimeMillis()
+                    Log.d(TAG, "[PERF_CONTACTS] Loaded ${contacts.size} contacts in ${contactsLoadTime - appStartTime}ms")
+                    
+                    val privateContacts = MyContactsContentProvider.getContacts(context, privateCursor)
+                    if (privateContacts.isNotEmpty()) {
+                        contacts.addAll(privateContacts)
+                    }
+
+                    this.queryLimit = queryLimit
+                    
+                    val queryStartTime = System.currentTimeMillis()
+                    // Use optimized aggregated query instead of loading all records
+                    val aggregatedCalls = getRecentsAggregated(
+                        contacts = contacts,
+                        limit = queryLimit,
+                        previousRecents = previousRecents
+                    )
+                    val queryEndTime = System.currentTimeMillis()
+                    Log.d(TAG, "[PERF_QUERY] Aggregated query returned ${aggregatedCalls.size} unique contacts in ${queryEndTime - queryStartTime}ms")
+
+                    val ignoredSources = context.baseConfig.ignoredContactSources
+                    val filterStartTime = System.currentTimeMillis()
+                    val filteredCalls = if (SMT_PRIVATE in ignoredSources) {
+                        val privateNumbers = privateContacts.flatMap { it.phoneNumbers }.map { it.value }
+                        aggregatedCalls.filterNot { it.phoneNumber in privateNumbers }
+                    } else {
+                        aggregatedCalls
+                    }
+                    Log.d(TAG, "[PERF_FILTER] Filtered to ${filteredCalls.size} contacts in ${System.currentTimeMillis() - filterStartTime}ms")
+
+                    val dateGroupStartTime = System.currentTimeMillis()
+                    val finalResult = groupCallsByDate(filteredCalls)
+                    val dateGroupEndTime = System.currentTimeMillis()
+                    Log.d(TAG, "[PERF_DATE_GROUP] Date grouping completed in ${dateGroupEndTime - dateGroupStartTime}ms")
+                    
+                    val totalTime = dateGroupEndTime - appStartTime
+                    Log.d(TAG, "[PERF_TOTAL] Total time: ${totalTime}ms (Contacts: ${contactsLoadTime - appStartTime}ms | Query: ${queryEndTime - queryStartTime}ms | Filter: ${System.currentTimeMillis() - filterStartTime}ms | DateGroup: ${dateGroupEndTime - dateGroupStartTime}ms)")
+                    
+                    cacheRecentCalls(filteredCalls)
+                    callback(finalResult)
                 }
-
-                this.queryLimit = queryLimit
-                
-                val queryStartTime = System.currentTimeMillis()
-                // Use optimized aggregated query instead of loading all records
-                val aggregatedCalls = getRecentsAggregated(
-                    contacts = contacts,
-                    limit = queryLimit,
-                    previousRecents = previousRecents
-                )
-                val queryEndTime = System.currentTimeMillis()
-                Log.d(TAG, "[PERF_QUERY] Aggregated query returned ${aggregatedCalls.size} unique contacts in ${queryEndTime - queryStartTime}ms")
-
-                val ignoredSources = context.baseConfig.ignoredContactSources
-                val filterStartTime = System.currentTimeMillis()
-                val filteredCalls = if (SMT_PRIVATE in ignoredSources) {
-                    val privateNumbers = privateContacts.flatMap { it.phoneNumbers }.map { it.value }
-                    aggregatedCalls.filterNot { it.phoneNumber in privateNumbers }
-                } else {
-                    aggregatedCalls
-                }
-                Log.d(TAG, "[PERF_FILTER] Filtered to ${filteredCalls.size} contacts in ${System.currentTimeMillis() - filterStartTime}ms")
-
-                val dateGroupStartTime = System.currentTimeMillis()
-                val finalResult = groupCallsByDate(filteredCalls)
-                val dateGroupEndTime = System.currentTimeMillis()
-                Log.d(TAG, "[PERF_DATE_GROUP] Date grouping completed in ${dateGroupEndTime - dateGroupStartTime}ms")
-                
-                val totalTime = dateGroupEndTime - appStartTime
-                Log.d(TAG, "[PERF_TOTAL] Total time: ${totalTime}ms (Contacts: ${contactsLoadTime - appStartTime}ms | Query: ${queryEndTime - queryStartTime}ms | Filter: ${System.currentTimeMillis() - filterStartTime}ms | DateGroup: ${dateGroupEndTime - dateGroupStartTime}ms)")
-                
-                cacheRecentCalls(filteredCalls)
-                callback(finalResult)
             }
         }
     }
@@ -340,12 +409,11 @@ class RecentsHelper(private val context: Context) {
             Calls.DATE, Calls.DURATION, Calls.TYPE, Calls.PHONE_ACCOUNT_ID, Calls.NUMBER_PRESENTATION
         )
 
-        // No LIMIT on the URI — we need to scan the full call log to find ALL unique contacts.
-        // The original 71-second bottleneck was O(N×M) JNI comparisons, NOT row count.
-        // With O(1) HashMap ops, 19,507 rows takes ~300–600ms.
+        val queryStart = System.currentTimeMillis()
         val cursor = context.contentResolver.query(
             contentUri, projection, selection, selectionParams, "${Calls.DATE} DESC"
         )
+        Log.d(TAG, "[PERF_QUERY_EXEC] contentResolver.query took ${System.currentTimeMillis() - queryStart}ms")
 
         // ── Pre-build O(1) contact lookup maps ──────────────────────────────────────
         // Key: last COMPARABLE_PHONE_NUMBER_LENGTH digits of normalizedNumber
@@ -357,7 +425,9 @@ class RecentsHelper(private val context: Context) {
         val valueToPhoto = HashMap<String, String>()
         // For contacts with multiple numbers
         val numbersToContactIDMap = HashMap<String, Int>()
+        val numbersToTypeAndLabelMap = HashMap<String, Pair<Int, String>>()
 
+        val mapStartTime = System.currentTimeMillis()
         contacts.forEach { contact ->
             val displayName = contact.getNameToDisplay()
             contact.phoneNumbers.forEach { pn ->
@@ -365,6 +435,11 @@ class RecentsHelper(private val context: Context) {
                 if (pn.value.isNotBlank()) {
                     valueToName[pn.value]  = displayName
                     if (contact.photoUri.isNotBlank()) valueToPhoto[pn.value] = contact.photoUri
+                    val typeAndLabel = Pair(pn.type, pn.label)
+                    numbersToTypeAndLabelMap[pn.value] = typeAndLabel
+                    if (pn.normalizedNumber.isNotBlank()) {
+                        numbersToTypeAndLabelMap[pn.normalizedNumber] = typeAndLabel
+                    }
                 }
                 // Normalized-suffix maps
                 val norm = pn.normalizedNumber
@@ -381,6 +456,7 @@ class RecentsHelper(private val context: Context) {
                 }
             }
         }
+        Log.d(TAG, "[PERF_MAP_BUILD] Building lookup maps took ${System.currentTimeMillis() - mapStartTime}ms")
         // ────────────────────────────────────────────────────────────────────────────
 
         // ── O(1) deduplication HashMap ───────────────────────────────────────────────
@@ -394,14 +470,28 @@ class RecentsHelper(private val context: Context) {
         val blockedNumbers = context.getBlockedNumbers()
         var rowsRead = 0
 
+        val normalizationCache = HashMap<String, String>()
+
+        val loopStartTime = System.currentTimeMillis()
         cursor?.use {
             if (!cursor.moveToFirst()) return@use
 
+            // Pre-resolve column indices to avoid getColumnIndex inside the loop
+            val idIndex = cursor.getColumnIndex(Calls._ID)
+            val numberIndex = cursor.getColumnIndex(Calls.NUMBER)
+            val presentationIndex = cursor.getColumnIndex(Calls.NUMBER_PRESENTATION)
+            val nameIndex = cursor.getColumnIndex(Calls.CACHED_NAME)
+            val photoIndex = cursor.getColumnIndex(Calls.CACHED_PHOTO_URI)
+            val dateIndex = cursor.getColumnIndex(Calls.DATE)
+            val durationIndex = cursor.getColumnIndex(Calls.DURATION)
+            val typeIndex = cursor.getColumnIndex(Calls.TYPE)
+            val accountIdIndex = cursor.getColumnIndex(Calls.PHONE_ACCOUNT_ID)
+
             do {
                 rowsRead++
-                val id     = cursor.getIntValue(Calls._ID)
-                val number = cursor.getStringValueOrNull(Calls.NUMBER)
-                val presentation = cursor.getIntValueOrNull(Calls.NUMBER_PRESENTATION) ?: Calls.PRESENTATION_ALLOWED
+                val id     = if (idIndex != -1) cursor.getInt(idIndex) else 0
+                val number = if (numberIndex != -1) cursor.getString(numberIndex) else null
+                val presentation = if (presentationIndex != -1 && !cursor.isNull(presentationIndex)) cursor.getInt(presentationIndex) else Calls.PRESENTATION_ALLOWED
                 val presentationBlocked = presentation == PRESENTATION_UNKNOWN
                         || presentation == PRESENTATION_UNAVAILABLE
                         || presentation == Calls.PRESENTATION_RESTRICTED
@@ -410,15 +500,19 @@ class RecentsHelper(private val context: Context) {
 
                 if (context.isNumberBlocked(number ?: "", blockedNumbers)) continue
 
+                // Cache phone number normalization to avoid JNI and reflection calls on every iteration
+                val normalizedNumber = number?.let {
+                    normalizationCache.getOrPut(it) { it.normalizePhoneNumber() ?: "" }
+                } ?: ""
+
                 // ── Name resolution (O(1)) ───────────────────────────────────────────
-                var name = cursor.getStringValueOrNull(Calls.CACHED_NAME)
-                    ?.takeIf { it.isNotEmpty() && it != "-1" }
+                var name = if (nameIndex != -1) cursor.getString(nameIndex)?.takeIf { it.isNotEmpty() && it != "-1" } else null
 
                 if (name == null && !isUnknownNumber && !number.isNullOrBlank()) {
                     name = valueToName[number]
                         ?: run {
-                            val norm = number.normalizePhoneNumber()
-                            if (!norm.isNullOrBlank() && norm.length >= COMPARABLE_PHONE_NUMBER_LENGTH)
+                            val norm = normalizedNumber
+                            if (norm.isNotEmpty() && norm.length >= COMPARABLE_PHONE_NUMBER_LENGTH)
                                 normalizedToName[norm.takeLast(COMPARABLE_PHONE_NUMBER_LENGTH)]
                             else null
                         }
@@ -429,15 +523,13 @@ class RecentsHelper(private val context: Context) {
                 // ────────────────────────────────────────────────────────────────────
 
                 // ── Photo resolution (O(1)) ──────────────────────────────────────────
-                var photoUri = cursor.getStringValue(Calls.CACHED_PHOTO_URI)
-                    ?.takeIf { it.isNotEmpty() }
-                    ?: ""
+                var photoUri = if (photoIndex != -1) cursor.getString(photoIndex)?.takeIf { it.isNotEmpty() } ?: "" else ""
 
                 if (photoUri.isEmpty() && !number.isNullOrEmpty()) {
                     photoUri = valueToPhoto[number]
                         ?: run {
-                            val norm = number.normalizePhoneNumber()
-                            if (!norm.isNullOrBlank() && norm.length >= COMPARABLE_PHONE_NUMBER_LENGTH)
+                            val norm = normalizedNumber
+                            if (norm.isNotEmpty() && norm.length >= COMPARABLE_PHONE_NUMBER_LENGTH)
                                 normalizedToPhoto[norm.takeLast(COMPARABLE_PHONE_NUMBER_LENGTH)]
                             else null
                         }
@@ -445,22 +537,20 @@ class RecentsHelper(private val context: Context) {
                 }
                 // ────────────────────────────────────────────────────────────────────
 
-                val startTS    = cursor.getLongValue(Calls.DATE)
-                val duration   = cursor.getIntValue(Calls.DURATION)
-                val type       = cursor.getIntValue(Calls.TYPE)
-                val accountId  = cursor.getStringValue(Calls.PHONE_ACCOUNT_ID)
+                val startTS    = if (dateIndex != -1) cursor.getLong(dateIndex) else 0L
+                val duration   = if (durationIndex != -1) cursor.getInt(durationIndex) else 0
+                val type       = if (typeIndex != -1) cursor.getInt(typeIndex) else 0
+                val accountId  = if (accountIdIndex != -1) cursor.getString(accountIdIndex) ?: "" else ""
                 val simAccount = accountIdToSimAccountMap[accountId]
 
                 var specificNumber = ""
                 var specificType   = ""
                 val contactIdWithMultipleNumbers = numbersToContactIDMap[number]
                 if (contactIdWithMultipleNumbers != null) {
-                    val specificPhoneNumber = contacts
-                        .firstOrNull { it.contactId == contactIdWithMultipleNumbers }
-                        ?.phoneNumbers?.firstOrNull { it.value == number }
-                    if (specificPhoneNumber != null) {
-                        specificNumber = specificPhoneNumber.value
-                        specificType   = context.getPhoneNumberTypeText(specificPhoneNumber.type, specificPhoneNumber.label)
+                    val typeAndLabel = numbersToTypeAndLabelMap[number]
+                    if (typeAndLabel != null) {
+                        specificNumber = number.orEmpty()
+                        specificType   = context.getPhoneNumberTypeText(typeAndLabel.first, typeAndLabel.second)
                     }
                 }
 
@@ -480,7 +570,7 @@ class RecentsHelper(private val context: Context) {
                 )
 
                 // ── O(1) dedup: normalized-suffix HashMap ────────────────────────────
-                val rawNorm = number?.normalizePhoneNumber() ?: ""
+                val rawNorm = normalizedNumber
                 val dedupKey = if (rawNorm.length >= COMPARABLE_PHONE_NUMBER_LENGTH)
                     rawNorm.takeLast(COMPARABLE_PHONE_NUMBER_LENGTH)
                 else
@@ -499,8 +589,10 @@ class RecentsHelper(private val context: Context) {
                 // ────────────────────────────────────────────────────────────────────
             } while (cursor.moveToNext())
         }
+        Log.d(TAG, "[PERF_CURSOR_LOOP] Processing $rowsRead rows took ${System.currentTimeMillis() - loopStartTime}ms")
 
         // Collapse each group: latest call becomes the parent, rest stored in groupedCalls
+        val collapseStartTime = System.currentTimeMillis()
         val recentCalls = mutableListOf<RecentCall>()
         for ((_, callsForNumber) in groupedByNumber) {
             val sortedByTime = callsForNumber.sortedByDescending { it.startTS }
@@ -510,6 +602,7 @@ class RecentsHelper(private val context: Context) {
                 else latestCall
             )
         }
+        Log.d(TAG, "[PERF_COLLAPSE] Collapsing groups took ${System.currentTimeMillis() - collapseStartTime}ms")
 
         val elapsed = System.currentTimeMillis() - startTime
         Log.d(TAG, "[AGG_END] Read $rowsRead rows → ${recentCalls.size} unique contacts in ${elapsed}ms")

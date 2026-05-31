@@ -1,6 +1,7 @@
 package org.fossify.phone.activities
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.ShortcutInfo
@@ -60,7 +61,13 @@ class MainActivity : SimpleActivity() {
     private var storedStartNameWithSurname = false
     var cachedContacts = ArrayList<Contact>()
 
+    companion object {
+        var appStartTime = 0L
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        appStartTime = System.currentTimeMillis()
+        Log.d("StartupPerf", "[APP_START] Activity onCreate started at $appStartTime")
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
         appLaunched(BuildConfig.APPLICATION_ID)
@@ -109,6 +116,7 @@ class MainActivity : SimpleActivity() {
 
     override fun onResume() {
         super.onResume()
+        Log.d("StartupPerf", "Activity startup time (onCreate to onResume): ${System.currentTimeMillis() - appStartTime}ms")
         if (storedShowTabs != config.showTabs) {
             config.lastUsedViewPagerPage = 0
             System.exit(0)
