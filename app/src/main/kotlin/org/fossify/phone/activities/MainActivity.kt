@@ -340,38 +340,38 @@ class MainActivity : SimpleActivity() {
     private fun getSelectedTabDrawableIds(): List<Int> {
         val showTabs = config.showTabs
         val icons = mutableListOf<Int>()
-
-        if (showTabs and TAB_CONTACTS != 0) {
-            icons.add(R.drawable.ic_person_vector)
+        for (tab in tabsList) {
+            if (showTabs and tab != 0) {
+                val icon = when (tab) {
+                    TAB_FAVORITES -> R.drawable.ic_star_vector
+                    TAB_CALL_HISTORY -> R.drawable.ic_clock_filled_vector
+                    TAB_CONTACTS -> R.drawable.ic_person_vector
+                    else -> 0
+                }
+                if (icon != 0) {
+                    icons.add(icon)
+                }
+            }
         }
-
-        if (showTabs and TAB_FAVORITES != 0) {
-            icons.add(R.drawable.ic_star_vector)
-        }
-
-        if (showTabs and TAB_CALL_HISTORY != 0) {
-            icons.add(R.drawable.ic_clock_filled_vector)
-        }
-
         return icons
     }
 
     private fun getDeselectedTabDrawableIds(): ArrayList<Int> {
         val showTabs = config.showTabs
         val icons = ArrayList<Int>()
-
-        if (showTabs and TAB_CONTACTS != 0) {
-            icons.add(R.drawable.ic_person_outline_vector)
+        for (tab in tabsList) {
+            if (showTabs and tab != 0) {
+                val icon = when (tab) {
+                    TAB_FAVORITES -> R.drawable.ic_star_outline_vector
+                    TAB_CALL_HISTORY -> R.drawable.ic_clock_vector
+                    TAB_CONTACTS -> R.drawable.ic_person_outline_vector
+                    else -> 0
+                }
+                if (icon != 0) {
+                    icons.add(icon)
+                }
+            }
         }
-
-        if (showTabs and TAB_FAVORITES != 0) {
-            icons.add(R.drawable.ic_star_outline_vector)
-        }
-
-        if (showTabs and TAB_CALL_HISTORY != 0) {
-            icons.add(R.drawable.ic_clock_vector)
-        }
-
         return icons
     }
 
@@ -398,7 +398,7 @@ class MainActivity : SimpleActivity() {
 
                 // open the Recents tab if we got here by clicking a missed call notification
                 if (intent.action == Intent.ACTION_VIEW && config.showTabs and TAB_CALL_HISTORY > 0) {
-                    wantedTab = binding.mainTabsHolder.tabCount - 1
+                    wantedTab = getTabIndexOf(TAB_CALL_HISTORY)
                 }
 
                 binding.mainTabsHolder.getTabAt(wantedTab)?.select()
@@ -443,8 +443,8 @@ class MainActivity : SimpleActivity() {
                 binding.viewPager.currentItem = it.position
                 updateBottomTabItemColors(it.customView, true, getSelectedTabDrawableIds()[it.position])
 
-                val lastPosition = binding.mainTabsHolder.tabCount - 1
-                if (it.position == lastPosition && config.showTabs and TAB_CALL_HISTORY > 0) {
+                val recentsPosition = getTabIndexOf(TAB_CALL_HISTORY)
+                if (it.position == recentsPosition && config.showTabs and TAB_CALL_HISTORY > 0) {
                     clearMissedCalls()
                 }
             }
@@ -456,20 +456,24 @@ class MainActivity : SimpleActivity() {
     }
 
     private fun getTabIcon(position: Int): Drawable {
-        val drawableId = when (position) {
-            0 -> R.drawable.ic_person_vector
-            1 -> R.drawable.ic_star_vector
-            else -> R.drawable.ic_clock_vector
+        val tab = tabsList.getOrNull(position)
+        val drawableId = when (tab) {
+            TAB_FAVORITES -> R.drawable.ic_star_vector
+            TAB_CALL_HISTORY -> R.drawable.ic_clock_vector
+            TAB_CONTACTS -> R.drawable.ic_person_vector
+            else -> R.drawable.ic_star_vector
         }
 
         return resources.getColoredDrawableWithColor(drawableId, getProperTextColor())
     }
 
     private fun getTabLabel(position: Int): String {
-        val stringId = when (position) {
-            0 -> R.string.contacts_tab
-            1 -> R.string.favorites_tab
-            else -> R.string.call_history_tab
+        val tab = tabsList.getOrNull(position)
+        val stringId = when (tab) {
+            TAB_FAVORITES -> R.string.favorites_tab
+            TAB_CALL_HISTORY -> R.string.call_history_tab
+            TAB_CONTACTS -> R.string.contacts_tab
+            else -> R.string.favorites_tab
         }
 
         return resources.getString(stringId)
@@ -506,22 +510,36 @@ class MainActivity : SimpleActivity() {
         getRecentsFragment()?.refreshItems()
     }
 
+    fun getTabIndexOf(tabMask: Int): Int {
+        val showTabs = config.showTabs
+        var index = 0
+        for (tab in tabsList) {
+            if (showTabs and tab != 0) {
+                if (tab == tabMask) {
+                    return index
+                }
+                index++
+            }
+        }
+        return 0
+    }
+
     private fun getAllFragments(): ArrayList<MyViewPagerFragment<*>?> {
         val showTabs = config.showTabs
         val fragments = arrayListOf<MyViewPagerFragment<*>?>()
-
-        if (showTabs and TAB_CONTACTS > 0) {
-            fragments.add(getContactsFragment())
+        for (tab in tabsList) {
+            if (showTabs and tab > 0) {
+                val fragment = when (tab) {
+                    TAB_FAVORITES -> getFavoritesFragment()
+                    TAB_CALL_HISTORY -> getRecentsFragment()
+                    TAB_CONTACTS -> getContactsFragment()
+                    else -> null
+                }
+                if (fragment != null) {
+                    fragments.add(fragment)
+                }
+            }
         }
-
-        if (showTabs and TAB_FAVORITES > 0) {
-            fragments.add(getFavoritesFragment())
-        }
-
-        if (showTabs and TAB_CALL_HISTORY > 0) {
-            fragments.add(getRecentsFragment())
-        }
-
         return fragments
     }
 
@@ -534,30 +552,12 @@ class MainActivity : SimpleActivity() {
     private fun getRecentsFragment(): RecentsFragment? = findViewById(R.id.recents_fragment)
 
     private fun getDefaultTab(): Int {
-        val showTabsMask = config.showTabs
         return when (config.defaultTab) {
             TAB_LAST_USED -> if (config.lastUsedViewPagerPage < binding.mainTabsHolder.tabCount) config.lastUsedViewPagerPage else 0
-            TAB_CONTACTS -> 0
-            TAB_FAVORITES -> if (showTabsMask and TAB_CONTACTS > 0) 1 else 0
-            else -> {
-                if (showTabsMask and TAB_CALL_HISTORY > 0) {
-                    if (showTabsMask and TAB_CONTACTS > 0) {
-                        if (showTabsMask and TAB_FAVORITES > 0) {
-                            2
-                        } else {
-                            1
-                        }
-                    } else {
-                        if (showTabsMask and TAB_FAVORITES > 0) {
-                            1
-                        } else {
-                            0
-                        }
-                    }
-                } else {
-                    0
-                }
-            }
+            TAB_CONTACTS -> getTabIndexOf(TAB_CONTACTS)
+            TAB_FAVORITES -> getTabIndexOf(TAB_FAVORITES)
+            TAB_CALL_HISTORY -> getTabIndexOf(TAB_CALL_HISTORY)
+            else -> 0
         }
     }
 

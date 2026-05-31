@@ -22,9 +22,9 @@ const val ALWAYS_SHOW_FULLSCREEN = "always_show_fullscreen"
 const val NOVA_DYNAMIC_COLORS = "nova_dynamic_colors"
 const val NOVA_AMOLED_BLACK = "nova_amoled_black"
 
-const val ALL_TABS_MASK = TAB_CONTACTS or TAB_FAVORITES or TAB_CALL_HISTORY
+const val ALL_TABS_MASK = TAB_FAVORITES or TAB_CALL_HISTORY or TAB_CONTACTS
 
-val tabsList = arrayListOf(TAB_CONTACTS, TAB_FAVORITES, TAB_CALL_HISTORY)
+val tabsList = arrayListOf(TAB_FAVORITES, TAB_CALL_HISTORY, TAB_CONTACTS)
 
 private const val PATH = "org.fossify.phone.action."
 const val ACCEPT_CALL = PATH + "ACCEPT_CALL"
