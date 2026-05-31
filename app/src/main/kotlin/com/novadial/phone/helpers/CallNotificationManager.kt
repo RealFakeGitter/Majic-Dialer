@@ -16,6 +16,7 @@ import org.fossify.commons.extensions.setVisibleIf
 import com.novadial.phone.R
 import com.novadial.phone.activities.CallActivity
 import com.novadial.phone.receivers.CallActionReceiver
+import com.novadial.phone.extensions.isOutgoing
 
 class CallNotificationManager(private val context: Context) {
     companion object {
@@ -90,8 +91,15 @@ class CallNotificationManager(private val context: Context) {
                 }
             }
 
+            val isOutgoing = CallManager.getPrimaryCall()?.isOutgoing() == true
+            val iconId = if (isOutgoing) {
+                R.drawable.ic_call_made_notification
+            } else {
+                R.drawable.ic_call_received_notification
+            }
+
             val builder = Notification.Builder(context, channelId)
-                .setSmallIcon(R.drawable.ic_phone_vector)
+                .setSmallIcon(iconId)
                 .setContentIntent(openAppPendingIntent)
                 .setCategory(Notification.CATEGORY_CALL)
                 .setCustomContentView(collapsedView)
@@ -99,6 +107,7 @@ class CallNotificationManager(private val context: Context) {
                 .setUsesChronometer(callState == Call.STATE_ACTIVE)
                 .setChannelId(channelId)
                 .setStyle(Notification.DecoratedCustomViewStyle())
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
 
             if (isHighPriority) {
                 builder.setFullScreenIntent(openAppPendingIntent, true)

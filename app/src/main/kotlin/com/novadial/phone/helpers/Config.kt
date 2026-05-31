@@ -1,5 +1,6 @@
 package com.novadial.phone.helpers
 
+import android.graphics.Color
 import android.content.Context
 import android.net.Uri
 import android.telecom.PhoneAccountHandle
@@ -17,6 +18,13 @@ import java.util.Locale
 class Config(context: Context) : BaseConfig(context) {
     companion object {
         fun newInstance(context: Context) = Config(context)
+    }
+
+    init {
+        if (!prefs.contains(NOVA_AMOLED_BLACK)) {
+            prefs.edit().putBoolean(NOVA_AMOLED_BLACK, true).apply()
+            backgroundColor = Color.BLACK
+        }
     }
 
     private val regionHint: String by lazy {
@@ -137,7 +145,7 @@ class Config(context: Context) : BaseConfig(context) {
         set(novaDynamicColors) = prefs.edit().putBoolean(NOVA_DYNAMIC_COLORS, novaDynamicColors).apply()
 
     var novaAmoledBlack: Boolean
-        get() = prefs.getBoolean(NOVA_AMOLED_BLACK, false)
+        get() = prefs.getBoolean(NOVA_AMOLED_BLACK, true)
         set(novaAmoledBlack) = prefs.edit().putBoolean(NOVA_AMOLED_BLACK, novaAmoledBlack).apply()
 
     var alwaysShowFullscreen: Boolean

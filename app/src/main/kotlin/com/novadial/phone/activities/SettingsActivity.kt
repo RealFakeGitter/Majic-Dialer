@@ -1,5 +1,7 @@
 package com.novadial.phone.activities
 
+import android.graphics.Color
+import androidx.core.content.ContextCompat
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -170,10 +172,20 @@ class SettingsActivity : SimpleActivity() {
                 recreate()
             }
 
+            if (!config.novaDynamicColors && config.backgroundColor != Color.BLACK) {
+                config.novaAmoledBlack = false
+            }
+
             settingsAmoledBlack.isChecked = config.novaAmoledBlack
             settingsAmoledBlackHolder.setOnClickListener {
                 settingsAmoledBlack.toggle()
-                config.novaAmoledBlack = settingsAmoledBlack.isChecked
+                val isChecked = settingsAmoledBlack.isChecked
+                config.novaAmoledBlack = isChecked
+                if (isChecked) {
+                    config.backgroundColor = Color.BLACK
+                } else {
+                    config.backgroundColor = ContextCompat.getColor(this@SettingsActivity, org.fossify.commons.R.color.theme_dark_background_color)
+                }
                 recreate()
             }
         }

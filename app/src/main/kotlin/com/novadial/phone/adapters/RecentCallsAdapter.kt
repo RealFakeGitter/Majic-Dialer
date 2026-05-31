@@ -541,30 +541,12 @@ class RecentCallsAdapter(
 
                 var finalNameToShow: CharSequence = nameToShow
                 if (consecutiveMissed >= 2) {
-                    val badgeText = "\nMissed ×$consecutiveMissed"
-                    val spannableBadge = SpannableString(badgeText)
-                    spannableBadge.setSpan(
-                        android.text.style.ForegroundColorSpan(missedCallColor),
-                        1, // Skip the newline character
-                        badgeText.length,
-                        android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                    spannableBadge.setSpan(
-                        android.text.style.RelativeSizeSpan(0.75f),
-                        1, // Skip the newline character
-                        badgeText.length,
-                        android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                    finalNameToShow = TextUtils.concat(nameToShow, spannableBadge)
+                    finalNameToShow = TextUtils.concat(nameToShow, " ($consecutiveMissed)")
                 }
 
                 itemRecentsName.apply {
-                    setSingleLine(consecutiveMissed < 2)
-                    if (consecutiveMissed >= 2) {
-                        maxLines = 2
-                    } else {
-                        maxLines = 1
-                    }
+                    setSingleLine(true)
+                    maxLines = 1
                     text = finalNameToShow
                     setTextColor(textColor)
                     setTextSize(TypedValue.COMPLEX_UNIT_PX, currentFontSize)

@@ -10,7 +10,17 @@ sealed class CallLogItem {
 
     fun getItemId(): Int {
         return when (this) {
-            is Date -> -(timestamp / (DAY_SECONDS * 1000L)).toInt()
+            is Date -> {
+                val cleanDate = dayCode.replace("-", "")
+                val dayInt = cleanDate.toIntOrNull()
+                if (dayInt != null) {
+                    -dayInt
+                } else {
+                    val hash = dayCode.hashCode()
+                    val uniqueId = if (hash == Int.MIN_VALUE) Int.MAX_VALUE else kotlin.math.abs(hash)
+                    -uniqueId
+                }
+            }
             is RecentCall -> id
         }
     }

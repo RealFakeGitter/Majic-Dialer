@@ -15,6 +15,7 @@ import org.fossify.commons.extensions.telecomManager
 import org.fossify.commons.helpers.KEY_PHONE
 import org.fossify.commons.helpers.ensureBackgroundThread
 import com.novadial.phone.helpers.Config
+import com.novadial.phone.helpers.MissedCallNotifier
 import com.novadial.phone.models.SIMAccount
 
 val Context.config: Config get() = Config.newInstance(applicationContext)
@@ -73,6 +74,7 @@ fun Context.clearMissedCalls() {
             // should update the database and reset the cached missed call count in MissedCallNotifier.java
             // https://android.googlesource.com/platform/packages/services/Telecomm/+/master/src/com/android/server/telecom/ui/MissedCallNotifierImpl.java#170
             telecomManager.cancelMissedCallsNotification()
+            MissedCallNotifier.cancelMissedCallNotification(this)
         } catch (ignored: Exception) {
         }
     }
