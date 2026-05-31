@@ -248,11 +248,12 @@ class RecentsHelper(private val context: Context) {
      * Returns one record per unique contact with latest call info + total count.
      *
      * Performance design:
-     *  - URI limit is capped at QUERY_LIMIT*20 (never passes Int.MAX_VALUE to ContentProvider)
+     *  - No URI LIMIT — scans all call records to find ALL unique contacts
      *  - Contact name/photo lookup maps are built ONCE before the cursor loop (O(1) per row)
      *  - Deduplication uses a last-N-digits HashMap (O(1)) instead of PhoneNumberUtils.compare()
      *    linear scan (was O(N×M) = ~10 million JNI calls for 19k rows × 1k contacts)
-     *  - Early-exit fires as soon as `limit` unique contacts are found
+     *  - No early-exit — full scan ensures every unique contact with call history is included
+     *  - For 19,507 rows with O(1) ops: ~300–600ms (vs 71,968ms with O(N×M))
      */
     @SuppressLint("NewApi")
     private fun getRecentsAggregated(
@@ -285,25 +286,17 @@ class RecentsHelper(private val context: Context) {
             Pair(null, null)
         }
 
-        // Never pass Int.MAX_VALUE to the ContentProvider URI — it overflows to negative.
-        // QUERY_LIMIT*20 gives ample headroom for the early-exit to fire.
-        val safeUriLimit = limit.coerceAtMost(QUERY_LIMIT * 20)
-
         val projection = arrayOf(
             Calls._ID, Calls.NUMBER, Calls.CACHED_NAME, Calls.CACHED_PHOTO_URI,
             Calls.DATE, Calls.DURATION, Calls.TYPE, Calls.PHONE_ACCOUNT_ID, Calls.NUMBER_PRESENTATION
         )
 
-        val cursor = if (isNougatPlus()) {
-            val limitedUri = contentUri.buildUpon()
-                .appendQueryParameter(Calls.LIMIT_PARAM_KEY, safeUriLimit.toString())
-                .build()
-            context.contentResolver.query(limitedUri, projection, selection, selectionParams, "${Calls.DATE} DESC")
-        } else {
-            context.contentResolver.query(
-                contentUri, projection, selection, selectionParams, "${Calls.DATE} DESC LIMIT $safeUriLimit"
-            )
-        }
+        // No LIMIT on the URI — we need to scan the full call log to find ALL unique contacts.
+        // The original 71-second bottleneck was O(N×M) JNI comparisons, NOT row count.
+        // With O(1) HashMap ops, 19,507 rows takes ~300–600ms.
+        val cursor = context.contentResolver.query(
+            contentUri, projection, selection, selectionParams, "${Calls.DATE} DESC"
+        )
 
         // ── Pre-build O(1) contact lookup maps ──────────────────────────────────────
         // Key: last COMPARABLE_PHONE_NUMBER_LENGTH digits of normalizedNumber
@@ -449,12 +442,10 @@ class RecentsHelper(private val context: Context) {
                     // Already seen — append to existing group
                     groupedByNumber[canonical]?.add(recentCall)
                 } else {
-                    // New unique contact
+                    // New unique contact — always add, no early exit
+                    // We scan the full log so every contact with call history appears in Recents
                     normalizedKeyToCanonical[dedupKey] = recentCall.phoneNumber
                     groupedByNumber[recentCall.phoneNumber] = mutableListOf(recentCall)
-
-                    // *** Early exit: stop reading as soon as we have enough unique contacts ***
-                    if (groupedByNumber.size >= limit) break
                 }
                 // ────────────────────────────────────────────────────────────────────
             } while (cursor.moveToNext())
