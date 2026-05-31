@@ -1,38 +1,82 @@
-# Nova Dialer
-<img alt="Logo" src="graphics/icon.webp" width="120" />
+# NovaDial
 
-Nova Dialer is a personal fork of the original NovaDial project. It includes custom changes and improvements by the fork maintainer, while giving full credit to NovaDial for the source project and its privacy-first vision.
+<p align="center">
+  <img src="graphics/icon.webp" width="120" alt="NovaDial Logo" />
+</p>
 
-Fork maintained by Dhilip.
+NovaDial is a modern Android dialer application based on Fossify Phone, redesigned and enhanced for a cleaner, faster, and more customizable calling experience.
 
-<a href='https://play.google.com/store/apps/details?id=org.fossify.phone'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' height=80/></a> <a href="https://f-droid.org/packages/org.fossify.phone/"><img src="https://fdroid.gitlab.io/artwork/badge/get-it-on-en.svg" alt="Get it on F-Droid" height=80/></a> <a href="https://apt.izzysoft.de/fdroid/index/apk/org.fossify.phone"><img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" alt="Get it on IzzyOnDroid" height=80/></a>
+## About
 
-Empower your calls, and safeguard your data. This fork builds on NovaDial's privacy-first foundation while incorporating personal customizations and improvements.
+NovaDial is a community-driven fork of Fossify Phone with additional UI improvements, performance optimizations, customization options, and dialer enhancements.
 
-📱 **YOUR PRIVACY, OUR PRIORITY:**  
-Welcome to the NovaDial App, where your digital privacy is paramount. Switch to a mobile experience that respects your data, ensuring your personal information remains secure and private.
+The goal of NovaDial is to provide a modern and feature-rich dialer while remaining lightweight, privacy-friendly, and open source.
 
-🚀 **SEAMLESS PERFORMANCE:**  
-The NovaDial App offers a fluid and responsive mobile interface, enhancing your phone's performance while safeguarding your privacy. Experience a lag-free, smooth user experience, optimized for efficiency and speed.
+## Features
 
-🌐 **OPEN-SOURCE ASSURANCE:**  
-With the NovaDial App, transparency is at your fingertips. Built on an open-source foundation, our app allows you to review our code on GitHub, fostering trust and a community committed to privacy.
+* Fast call history loading
+* Optimized recent calls view
+* Contact-centric call history
+* AMOLED Black theme support
+* Multiple Recents UI styles
+* Improved call history grouping
+* Modernized user interface
+* Material Design components
+* Dual SIM support
+* Contact management
+* Favorites support
+* Offline-first experience
+* No advertisements
+* Open source
 
-🖼️ **TAILOR-MADE CUSTOMIZATION:**  
-Customize your mobile experience with the NovaDial App. Adjust your app settings for a personalized interface, from thematic designs to functional preferences. Enjoy a user interface that's intuitive and uniquely yours.
+## Screenshots
 
-🔋 **EFFICIENT RESOURCE MANAGEMENT:**  
-The NovaDial App is designed for optimal resource usage, contributing to extended battery life. It's light on your phone's resources, ensuring your device runs efficiently with minimized battery drain.
+<p align="center">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1_en-US.png" width="30%" alt="Call History" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2_en-US.png" width="30%" alt="Dialer" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3_en-US.png" width="30%" alt="Contact Details" />
+</p>
 
-Download the NovaDial App now and step into a mobile world where privacy seamlessly blends with functionality. Your journey towards a safer, personalized mobile experience starts here.
+## Installation
 
-➡️ Explore more NovaDial apps: https://www.fossify.org<br>
-➡️ Open-Source Code: https://www.github.com/NovaDialOrg<br>
-➡️ Join the community on Reddit: https://www.reddit.com/r/NovaDial<br>
-➡️ Connect on Telegram: https://t.me/NovaDial
+Download the latest APK from the Releases section or build from source.
 
-<div align="center">
-<img alt="App image" src="fastlane/metadata/android/en-US/images/phoneScreenshots/1_en-US.png" width="30%">
-<img alt="App image" src="fastlane/metadata/android/en-US/images/phoneScreenshots/2_en-US.png" width="30%">
-<img alt="App image" src="fastlane/metadata/android/en-US/images/phoneScreenshots/3_en-US.png" width="30%">
-</div>
+## Building
+
+```bash
+git clone https://github.com/dhilipmpms/Phone.git
+cd Phone
+./gradlew assembleCoreDebug
+```
+
+## Credits
+
+NovaDial is based on the excellent Fossify Phone project.
+
+Original Project:
+
+https://github.com/FossifyOrg/Phone
+
+Huge thanks to the Fossify team for creating and maintaining the original open-source application.
+
+## Maintainer
+
+Dhilip
+
+GitHub:
+https://github.com/dhilipmpms
+
+NovaDial Repository:
+https://github.com/dhilipmpms/Phone
+
+## License
+
+NovaDial follows the same open-source license as the original Fossify Phone project.
+
+Please refer to the LICENSE file for details.
+
+## Disclaimer
+
+NovaDial is an independent community fork and is not affiliated with, endorsed by, or maintained by the Fossify organization.
+
+All credit for the original foundation of this project belongs to the Fossify contributors.
