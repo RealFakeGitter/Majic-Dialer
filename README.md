@@ -34,7 +34,7 @@ The goal of NovaDial is to provide a modern and feature-rich dialer while remain
 <p align="center">
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1_en-US.png" width="30%" alt="Call History" />
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2_en-US.png" width="30%" alt="Dialer" />
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3_en-US.png" width="30%" alt="Contact Details" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3_en-US.png" width="30%" alt="About" />
 </p>
 
 ## Installation
