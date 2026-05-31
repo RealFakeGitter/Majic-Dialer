@@ -2,20 +2,22 @@ package com.novadial.phone.extensions
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
 import android.telecom.PhoneAccount
 import android.telecom.PhoneAccountHandle
 import android.telecom.TelecomManager
+import android.util.Log
 import org.fossify.commons.R
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.dialogs.CallConfirmationDialog
 import org.fossify.commons.dialogs.PermissionRequiredDialog
 import org.fossify.commons.extensions.canUseFullScreenIntent
 import org.fossify.commons.extensions.initiateCall
-import org.fossify.commons.extensions.isDefaultDialer
-import org.fossify.commons.extensions.launchCallIntent
 import org.fossify.commons.extensions.openFullScreenIntentSettings
 import org.fossify.commons.extensions.openNotificationSettings
 import org.fossify.commons.extensions.telecomManager
+import org.fossify.commons.extensions.toast
 import org.fossify.commons.helpers.PERMISSION_READ_PHONE_STATE
 import org.fossify.commons.models.contacts.Contact
 import com.novadial.phone.BuildConfig
@@ -27,16 +29,39 @@ fun SimpleActivity.startCallIntent(
     recipient: String,
     forceSimSelector: Boolean = false
 ) {
-    if (isDefaultDialer()) {
+    val telUri = Uri.parse("tel:$recipient")
+    Log.d("NOVADIAL_CALL", "startCallIntent: number=$recipient, isDefaultDialer=${isNovaDialDefaultDialer()}, package=$packageName")
+    // Use isNovaDialDefaultDialer() instead of the commons isDefaultDialer() which is
+    // hardcoded to check for "org.fossify.phone" package prefix and always returns true
+    // for com.novadial.phone, causing placeCall() to throw SecurityException.
+    if (isNovaDialDefaultDialer()) {
         getHandleToUse(
             intent = null,
             phoneNumber = recipient,
             forceSimSelector = forceSimSelector
         ) { handle ->
-            launchCallIntent(recipient, handle)
+            try {
+                if (handle != null) {
+                    Bundle().apply {
+                        putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, handle)
+                        putBoolean(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE, false)
+                        putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, false)
+                        telecomManager.placeCall(telUri, this)
+                    }
+                } else {
+                    telecomManager.placeCall(telUri, Bundle())
+                }
+            } catch (e: Exception) {
+                toast(R.string.no_app_found)
+            }
         }
     } else {
-        launchCallIntent(recipient, null)
+        val callIntent = Intent(Intent.ACTION_DIAL, telUri)
+        if (callIntent.resolveActivity(packageManager) != null) {
+            startActivity(callIntent)
+        } else {
+            toast(R.string.no_app_found)
+        }
     }
 }
 
@@ -60,10 +85,10 @@ fun SimpleActivity.startCallWithConfirmationCheck(contact: Contact) {
             activity = this,
             callee = contact.getNameToDisplay()
         ) {
-            initiateCall(contact) { launchCallIntent(it) }
+            initiateCall(contact) { startCallIntent(it) }
         }
     } else {
-        initiateCall(contact) { launchCallIntent(it) }
+        initiateCall(contact) { startCallIntent(it) }
     }
 }
 
@@ -76,7 +101,21 @@ fun BaseSimpleActivity.callContactWithSim(
         val handle = getAvailableSIMCardLabels()
             .sortedBy { it.id }
             .getOrNull(wantedSimIndex)?.handle
-        launchCallIntent(recipient, handle)
+        try {
+            val telUri = Uri.parse("tel:$recipient")
+            if (handle != null) {
+                Bundle().apply {
+                    putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, handle)
+                    putBoolean(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE, false)
+                    putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, false)
+                    telecomManager.placeCall(telUri, this)
+                }
+            } else {
+                telecomManager.placeCall(Uri.parse("tel:$recipient"), Bundle())
+            }
+        } catch (e: Exception) {
+            toast(R.string.no_app_found)
+        }
     }
 }
 

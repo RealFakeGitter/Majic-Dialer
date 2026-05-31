@@ -29,7 +29,6 @@ import org.fossify.commons.extensions.getContrastColor
 import org.fossify.commons.extensions.getMyContactsCursor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
-import org.fossify.commons.extensions.isDefaultDialer
 import org.fossify.commons.extensions.normalizeString
 import org.fossify.commons.extensions.onTextChangeListener
 import org.fossify.commons.extensions.performHapticFeedback
@@ -298,7 +297,7 @@ class DialpadActivity : SimpleActivity() {
         if (len > 8 && text.startsWith("*#*#") && text.endsWith("#*#*")) {
             val secretCode = text.substring(4, text.length - 4)
             if (isOreoPlus()) {
-                if (isDefaultDialer()) {
+                if (isNovaDialDefaultDialer()) {
                     getSystemService(TelephonyManager::class.java)?.sendDialerSpecialCode(secretCode)
                 } else {
                     launchSetDefaultDialerIntent()
@@ -355,7 +354,7 @@ class DialpadActivity : SimpleActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
         super.onActivityResult(requestCode, resultCode, resultData)
-        if (requestCode == REQUEST_CODE_SET_DEFAULT_DIALER && isDefaultDialer()) {
+        if (requestCode == REQUEST_CODE_SET_DEFAULT_DIALER && isNovaDialDefaultDialer()) {
             dialpadValueChanged(binding.dialpadInput.value)
         }
     }

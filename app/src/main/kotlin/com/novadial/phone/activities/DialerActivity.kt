@@ -21,8 +21,8 @@ class DialerActivity : SimpleActivity() {
         if (intent.action == Intent.ACTION_CALL && intent.data != null) {
             callNumber = intent.data
 
-            // make sure Simple Dialer is the default Phone app before initiating an outgoing call
-            if (!isDefaultDialer()) {
+            // make sure NovaDial is the default Phone app before initiating an outgoing call
+            if (!isNovaDialDefaultDialer()) {
                 launchSetDefaultDialerIntent()
             } else {
                 initOutgoingCall()
@@ -62,7 +62,7 @@ class DialerActivity : SimpleActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
         super.onActivityResult(requestCode, resultCode, resultData)
         if (requestCode == REQUEST_CODE_SET_DEFAULT_DIALER) {
-            if (!isDefaultDialer()) {
+            if (!isNovaDialDefaultDialer()) {
                 try {
                     hideKeyboard()
                     Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {

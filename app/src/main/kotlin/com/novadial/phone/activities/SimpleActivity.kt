@@ -1,13 +1,16 @@
 package com.novadial.phone.activities
+
+import android.app.role.RoleManager
 import android.graphics.Color
 import android.os.Build
+import android.util.Log
+import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.isSystemInDarkMode
-import com.novadial.phone.extensions.config
-
-import org.fossify.commons.activities.BaseSimpleActivity
+import org.fossify.commons.extensions.telecomManager
 import com.novadial.phone.R
+import com.novadial.phone.extensions.config
 
 open class SimpleActivity : BaseSimpleActivity() {
     override fun getAppIconIDs() = arrayListOf(
@@ -51,4 +54,34 @@ open class SimpleActivity : BaseSimpleActivity() {
     }
 
     override fun getRepositoryName() = "Phone"
+
+    /**
+     * Returns true if NovaDial is the active default phone/dialer app.
+     *
+     * The fossify-commons `isDefaultDialer()` extension is compiled with a hardcoded
+     * `packageName.startsWith("org.fossify.phone")` guard. Since our package is
+     * `com.novadial.phone`, neither prefix matches, causing an early `return true`
+     * that bypasses the actual TelecomManager/RoleManager check.
+     *
+     * This function performs the real check so that:
+     *  - We don't call `telecomManager.placeCall()` without being the default dialer
+     *    (which throws SecurityException → "no app found" toast)
+     *  - UI correctly prompts the user to set NovaDial as default when needed
+     */
+    fun isNovaDialDefaultDialer(): Boolean {
+        Log.d("NOVADIAL_CALL", "isNovaDialDefaultDialer() package=$packageName")
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val roleManager = getSystemService(RoleManager::class.java)
+            val result = roleManager != null &&
+                roleManager.isRoleAvailable(RoleManager.ROLE_DIALER) &&
+                roleManager.isRoleHeld(RoleManager.ROLE_DIALER)
+            Log.d("NOVADIAL_CALL", "RoleManager.isRoleHeld(DIALER)=$result")
+            result
+        } else {
+            val defaultPkg = telecomManager.defaultDialerPackage
+            val result = defaultPkg == packageName
+            Log.d("NOVADIAL_CALL", "defaultDialerPackage=$defaultPkg match=$result")
+            result
+        }
+    }
 }

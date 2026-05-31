@@ -78,7 +78,7 @@ class MainActivity : SimpleActivity() {
         EventBus.getDefault().register(this)
         launchedDialer = savedInstanceState?.getBoolean(OPEN_DIAL_PAD_AT_LAUNCH) ?: false
 
-        if (isDefaultDialer()) {
+        if (isNovaDialDefaultDialer()) {
             checkContactPermissions()
 
             if (!config.wasOverlaySnackbarConfirmed && !Settings.canDrawOverlays(this)) {
