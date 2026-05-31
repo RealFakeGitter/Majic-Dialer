@@ -84,81 +84,54 @@ class RecentsHelper(private val context: Context) {
         callback: (List<CallLogItem>) -> Unit,
     ) {
         val appStartTime = System.currentTimeMillis()
-        Log.d(TAG, "[APP_START] Starting getGroupedRecentCalls at $appStartTime")
+        Log.d(TAG, "[PERF_START] Starting getGroupedRecentCalls")
         
         val privateCursor = context.getMyContactsCursor(favoritesOnly = false, withPhoneNumbersOnly = true)
         if (!context.hasPermission(PERMISSION_READ_CALL_LOG)) {
-            Log.d(TAG, "[PERMISSION] No call log permission")
+            Log.d(TAG, "[PERF_PERMISSION] No call log permission")
             callback(emptyList())
             return
         }
 
-            ContactsCache.getContacts(context) { contacts ->
+        ContactsCache.getContacts(context) { contacts ->
             val contactsLoadTime = System.currentTimeMillis()
-            Log.d(TAG, "[CONTACTS_LOADED] ContactsHelper returned ${contacts.size} contacts in ${contactsLoadTime - appStartTime}ms")
+            Log.d(TAG, "[PERF_CONTACTS] Loaded ${contacts.size} contacts in ${contactsLoadTime - appStartTime}ms")
             
             ensureBackgroundThread {
                 val privateContacts = MyContactsContentProvider.getContacts(context, privateCursor)
                 if (privateContacts.isNotEmpty()) {
                     contacts.addAll(privateContacts)
                 }
-                Log.d(TAG, "[PRIVATE_CONTACTS] Added ${privateContacts.size} private contacts, total now: ${contacts.size}")
 
                 this.queryLimit = queryLimit
                 
-                val recentsStartTime = System.currentTimeMillis()
-                val recentCalls = if (previousRecents.isNotEmpty()) {
-                    val previousRecentCalls = previousRecents
-                        .flatMap { it.groupedCalls ?: listOf(it) }
-                        .map { it.copy(groupedCalls = null) }
+                val queryStartTime = System.currentTimeMillis()
+                // Use optimized aggregated query instead of loading all records
+                val aggregatedCalls = getRecentsAggregated(
+                    contacts = contacts,
+                    limit = queryLimit,
+                    previousRecents = previousRecents
+                )
+                val queryEndTime = System.currentTimeMillis()
+                Log.d(TAG, "[PERF_QUERY] Aggregated query returned ${aggregatedCalls.size} unique contacts in ${queryEndTime - queryStartTime}ms")
 
-                    val newerRecents = getRecents(
-                        contacts = contacts,
-                        selection = "${Calls.DATE} > ?",
-                        selectionParams = arrayOf("${previousRecentCalls.first().startTS}")
-                    )
-
-                    val olderRecents = getRecents(
-                        contacts = contacts,
-                        selection = "${Calls.DATE} < ?",
-                        selectionParams = arrayOf("${previousRecentCalls.last().startTS}")
-                    )
-
-                    newerRecents + previousRecentCalls + olderRecents
-                } else {
-                    getRecents(contacts)
-                }
-                
-                val recentsLoadTime = System.currentTimeMillis()
-                Log.d(TAG, "[RECENTS_FETCHED] getRecents returned ${recentCalls.size} calls in ${recentsLoadTime - recentsStartTime}ms (total ${recentsLoadTime - appStartTime}ms)")
-
-                val sortedCalls = recentCalls
-                    .sortedByDescending { it.startTS }
-                    .distinctBy { it.id }
-                Log.d(TAG, "[SORTED] Sorted and deduped to ${sortedCalls.size} calls in ${System.currentTimeMillis() - recentsLoadTime}ms")
-
-                val groupingStartTime = System.currentTimeMillis()
-                val groupedCalls = groupSubsequentCalls(calls = sortedCalls)
-                val groupingEndTime = System.currentTimeMillis()
-                Log.d(TAG, "[GROUPED] groupSubsequentCalls completed in ${groupingEndTime - groupingStartTime}ms (total ${groupingEndTime - appStartTime}ms), result: ${groupedCalls.size} groups")
-                
                 val ignoredSources = context.baseConfig.ignoredContactSources
                 val filterStartTime = System.currentTimeMillis()
                 val filteredCalls = if (SMT_PRIVATE in ignoredSources) {
                     val privateNumbers = privateContacts.flatMap { it.phoneNumbers }.map { it.value }
-                    groupedCalls.filterNot { it.phoneNumber in privateNumbers }
+                    aggregatedCalls.filterNot { it.phoneNumber in privateNumbers }
                 } else {
-                    groupedCalls
+                    aggregatedCalls
                 }
-                Log.d(TAG, "[FILTERED] Filtered to ${filteredCalls.size} calls in ${System.currentTimeMillis() - filterStartTime}ms")
+                Log.d(TAG, "[PERF_FILTER] Filtered to ${filteredCalls.size} contacts in ${System.currentTimeMillis() - filterStartTime}ms")
 
                 val dateGroupStartTime = System.currentTimeMillis()
                 val finalResult = groupCallsByDate(filteredCalls)
                 val dateGroupEndTime = System.currentTimeMillis()
-                Log.d(TAG, "[DATE_GROUPED] groupCallsByDate completed in ${dateGroupEndTime - dateGroupStartTime}ms")
+                Log.d(TAG, "[PERF_DATE_GROUP] Date grouping completed in ${dateGroupEndTime - dateGroupStartTime}ms")
                 
                 val totalTime = dateGroupEndTime - appStartTime
-                Log.d(TAG, "[TOTAL] Total execution time: ${totalTime}ms | Contacts: ${contactsLoadTime - appStartTime}ms | Recents: ${recentsLoadTime - recentsStartTime}ms | Grouping: ${groupingEndTime - groupingStartTime}ms | DateGroup: ${dateGroupEndTime - dateGroupStartTime}ms")
+                Log.d(TAG, "[PERF_TOTAL] Total time: ${totalTime}ms (Contacts: ${contactsLoadTime - appStartTime}ms | Query: ${queryEndTime - queryStartTime}ms | Filter: ${System.currentTimeMillis() - filterStartTime}ms | DateGroup: ${dateGroupEndTime - dateGroupStartTime}ms)")
                 
                 callback(finalResult)
             }
@@ -206,6 +179,302 @@ class RecentsHelper(private val context: Context) {
                 )
             }
         }
+    }
+
+    /**
+     * Get FULL call history for a specific phone number.
+     * This is called when user opens a contact from the Recents screen.
+     * 
+     * Returns all calls for the given number (not limited to recent ones).
+     * Includes call timestamps, duration, type, etc. for timeline/statistics.
+     * 
+     * Performance: Only loads data for one contact, so fast despite loading all history.
+     */
+    fun getCallHistoryForNumber(
+        phoneNumber: String,
+        callback: (List<RecentCall>) -> Unit,
+    ) {
+        val startTime = System.currentTimeMillis()
+        Log.d(TAG, "[HISTORY_START] Loading full call history for $phoneNumber")
+        
+        if (phoneNumber.isBlank() || !context.hasPermission(PERMISSION_READ_CALL_LOG)) {
+            callback(emptyList())
+            return
+        }
+
+        val privateCursor = context.getMyContactsCursor(favoritesOnly = false, withPhoneNumbersOnly = true)
+        ContactsCache.getContacts(context) { contacts ->
+            ensureBackgroundThread {
+                val privateContacts = MyContactsContentProvider.getContacts(context, privateCursor)
+                if (privateContacts.isNotEmpty()) {
+                    contacts.addAll(privateContacts)
+                }
+
+                val matchingContact = contacts.firstOrNull { it.doesHavePhoneNumber(phoneNumber) }
+                val numbersToMatch = (matchingContact?.phoneNumbers
+                    ?.flatMap { listOf(it.value, it.normalizedNumber) }
+                    ?: listOf(phoneNumber))
+                    .plus(phoneNumber)
+                    .filter { it.isNotBlank() }
+                    .distinct()
+
+                // Load FULL history - no limit
+                val savedQueryLimit = queryLimit
+                queryLimit = Int.MAX_VALUE
+                
+                val calls = getRecents(
+                    contacts = contacts,
+                    selection = "${Calls.NUMBER} IN (${getQuestionMarks(numbersToMatch.size)})",
+                    selectionParams = numbersToMatch.toTypedArray()
+                )
+
+                queryLimit = savedQueryLimit
+
+                val result = calls
+                    .filter { call -> numbersToMatch.any { PhoneNumberUtils.compare(call.phoneNumber, it) || call.phoneNumber == it } }
+                    .sortedByDescending { it.startTS }
+                    .distinctBy { it.id }
+                
+                val elapsed = System.currentTimeMillis() - startTime
+                Log.d(TAG, "[HISTORY_END] Loaded ${result.size} calls for $phoneNumber in ${elapsed}ms")
+
+                callback(result)
+            }
+        }
+    }
+
+    /**
+     * Get aggregated recents grouped by phone number.
+     * Returns one record per unique contact with latest call info + total count.
+     *
+     * Performance design:
+     *  - URI limit is capped at QUERY_LIMIT*20 (never passes Int.MAX_VALUE to ContentProvider)
+     *  - Contact name/photo lookup maps are built ONCE before the cursor loop (O(1) per row)
+     *  - Deduplication uses a last-N-digits HashMap (O(1)) instead of PhoneNumberUtils.compare()
+     *    linear scan (was O(N×M) = ~10 million JNI calls for 19k rows × 1k contacts)
+     *  - Early-exit fires as soon as `limit` unique contacts are found
+     */
+    @SuppressLint("NewApi")
+    private fun getRecentsAggregated(
+        contacts: List<Contact>,
+        limit: Int = QUERY_LIMIT,
+        previousRecents: List<RecentCall> = ArrayList(),
+    ): List<RecentCall> {
+        val startTime = System.currentTimeMillis()
+        Log.d(TAG, "[AGG_START] Starting aggregated query with limit=$limit")
+
+        if (!context.hasPermission(PERMISSION_READ_CALL_LOG)) {
+            return emptyList()
+        }
+
+        val accountIdToSimAccountMap = HashMap<String, SIMAccount>()
+        context.getAvailableSIMCardLabels().forEach {
+            accountIdToSimAccountMap[it.handle.id] = it
+        }
+
+        // Build selection to filter by previous recents if provided
+        val (selection, selectionParams) = if (previousRecents.isNotEmpty()) {
+            val previousRecentCalls = previousRecents
+                .flatMap { it.groupedCalls ?: listOf(it) }
+                .map { it.copy(groupedCalls = null) }
+            Pair(
+                "${Calls.DATE} >= ?",
+                arrayOf("${previousRecentCalls.minOf { it.startTS }}")
+            )
+        } else {
+            Pair(null, null)
+        }
+
+        // Never pass Int.MAX_VALUE to the ContentProvider URI — it overflows to negative.
+        // QUERY_LIMIT*20 gives ample headroom for the early-exit to fire.
+        val safeUriLimit = limit.coerceAtMost(QUERY_LIMIT * 20)
+
+        val projection = arrayOf(
+            Calls._ID, Calls.NUMBER, Calls.CACHED_NAME, Calls.CACHED_PHOTO_URI,
+            Calls.DATE, Calls.DURATION, Calls.TYPE, Calls.PHONE_ACCOUNT_ID, Calls.NUMBER_PRESENTATION
+        )
+
+        val cursor = if (isNougatPlus()) {
+            val limitedUri = contentUri.buildUpon()
+                .appendQueryParameter(Calls.LIMIT_PARAM_KEY, safeUriLimit.toString())
+                .build()
+            context.contentResolver.query(limitedUri, projection, selection, selectionParams, "${Calls.DATE} DESC")
+        } else {
+            context.contentResolver.query(
+                contentUri, projection, selection, selectionParams, "${Calls.DATE} DESC LIMIT $safeUriLimit"
+            )
+        }
+
+        // ── Pre-build O(1) contact lookup maps ──────────────────────────────────────
+        // Key: last COMPARABLE_PHONE_NUMBER_LENGTH digits of normalizedNumber
+        // Built once here; each cursor row gets a HashMap lookup instead of a contacts.filter{} scan.
+        val normalizedToName  = HashMap<String, String>()
+        val normalizedToPhoto = HashMap<String, String>()
+        // Direct-value cache (exact match, fastest path)
+        val valueToName  = HashMap<String, String>()
+        val valueToPhoto = HashMap<String, String>()
+        // For contacts with multiple numbers
+        val numbersToContactIDMap = HashMap<String, Int>()
+
+        contacts.forEach { contact ->
+            val displayName = contact.getNameToDisplay()
+            contact.phoneNumbers.forEach { pn ->
+                // Exact-value maps
+                if (pn.value.isNotBlank()) {
+                    valueToName[pn.value]  = displayName
+                    if (contact.photoUri.isNotBlank()) valueToPhoto[pn.value] = contact.photoUri
+                }
+                // Normalized-suffix maps
+                val norm = pn.normalizedNumber
+                val key = if (norm.length >= COMPARABLE_PHONE_NUMBER_LENGTH)
+                    norm.takeLast(COMPARABLE_PHONE_NUMBER_LENGTH) else norm
+                if (key.isNotBlank()) {
+                    normalizedToName[key]  = displayName
+                    if (contact.photoUri.isNotBlank()) normalizedToPhoto[key] = contact.photoUri
+                }
+                // Multi-number map
+                if (contact.phoneNumbers.size > 1) {
+                    numbersToContactIDMap[pn.value]           = contact.contactId
+                    numbersToContactIDMap[pn.normalizedNumber] = contact.contactId
+                }
+            }
+        }
+        // ────────────────────────────────────────────────────────────────────────────
+
+        // ── O(1) deduplication HashMap ───────────────────────────────────────────────
+        // Key:   last COMPARABLE_PHONE_NUMBER_LENGTH digits of the normalized number
+        // Value: canonical phoneNumber string used as key in groupedByNumber
+        // This replaces the previous PhoneNumberUtils.compare() linear scan — was ~10M JNI calls.
+        val normalizedKeyToCanonical = HashMap<String, String>()
+
+        // LinkedHashMap preserves insertion order (cursor is DESC, so first insertion = latest call)
+        val groupedByNumber = LinkedHashMap<String, MutableList<RecentCall>>()
+        val blockedNumbers = context.getBlockedNumbers()
+        var rowsRead = 0
+
+        cursor?.use {
+            if (!cursor.moveToFirst()) return@use
+
+            do {
+                rowsRead++
+                val id     = cursor.getIntValue(Calls._ID)
+                val number = cursor.getStringValueOrNull(Calls.NUMBER)
+                val presentation = cursor.getIntValueOrNull(Calls.NUMBER_PRESENTATION) ?: Calls.PRESENTATION_ALLOWED
+                val presentationBlocked = presentation == PRESENTATION_UNKNOWN
+                        || presentation == PRESENTATION_UNAVAILABLE
+                        || presentation == Calls.PRESENTATION_RESTRICTED
+
+                var isUnknownNumber = presentationBlocked || number.isNullOrBlank() || number == "-1"
+
+                if (context.isNumberBlocked(number ?: "", blockedNumbers)) continue
+
+                // ── Name resolution (O(1)) ───────────────────────────────────────────
+                var name = cursor.getStringValueOrNull(Calls.CACHED_NAME)
+                    ?.takeIf { it.isNotEmpty() && it != "-1" }
+
+                if (name == null && !isUnknownNumber && !number.isNullOrBlank()) {
+                    name = valueToName[number]
+                        ?: run {
+                            val norm = number.normalizePhoneNumber()
+                            if (!norm.isNullOrBlank() && norm.length >= COMPARABLE_PHONE_NUMBER_LENGTH)
+                                normalizedToName[norm.takeLast(COMPARABLE_PHONE_NUMBER_LENGTH)]
+                            else null
+                        }
+                }
+                if (name.isNullOrBlank() || name == "-1") {
+                    name = if (isUnknownNumber) context.getString(R.string.unknown) else number.orEmpty()
+                }
+                // ────────────────────────────────────────────────────────────────────
+
+                // ── Photo resolution (O(1)) ──────────────────────────────────────────
+                var photoUri = cursor.getStringValue(Calls.CACHED_PHOTO_URI)
+                    ?.takeIf { it.isNotEmpty() }
+                    ?: ""
+
+                if (photoUri.isEmpty() && !number.isNullOrEmpty()) {
+                    photoUri = valueToPhoto[number]
+                        ?: run {
+                            val norm = number.normalizePhoneNumber()
+                            if (!norm.isNullOrBlank() && norm.length >= COMPARABLE_PHONE_NUMBER_LENGTH)
+                                normalizedToPhoto[norm.takeLast(COMPARABLE_PHONE_NUMBER_LENGTH)]
+                            else null
+                        }
+                        ?: ""
+                }
+                // ────────────────────────────────────────────────────────────────────
+
+                val startTS    = cursor.getLongValue(Calls.DATE)
+                val duration   = cursor.getIntValue(Calls.DURATION)
+                val type       = cursor.getIntValue(Calls.TYPE)
+                val accountId  = cursor.getStringValue(Calls.PHONE_ACCOUNT_ID)
+                val simAccount = accountIdToSimAccountMap[accountId]
+
+                var specificNumber = ""
+                var specificType   = ""
+                val contactIdWithMultipleNumbers = numbersToContactIDMap[number]
+                if (contactIdWithMultipleNumbers != null) {
+                    val specificPhoneNumber = contacts
+                        .firstOrNull { it.contactId == contactIdWithMultipleNumbers }
+                        ?.phoneNumbers?.firstOrNull { it.value == number }
+                    if (specificPhoneNumber != null) {
+                        specificNumber = specificPhoneNumber.value
+                        specificType   = context.getPhoneNumberTypeText(specificPhoneNumber.type, specificPhoneNumber.label)
+                    }
+                }
+
+                val recentCall = RecentCall(
+                    id             = id,
+                    phoneNumber    = number.orEmpty(),
+                    name           = name,
+                    photoUri       = photoUri,
+                    startTS        = startTS,
+                    duration       = duration,
+                    type           = type,
+                    simID          = simAccount?.id ?: -1,
+                    simColor       = simAccount?.color ?: -1,
+                    specificNumber = specificNumber,
+                    specificType   = specificType,
+                    isUnknownNumber = isUnknownNumber
+                )
+
+                // ── O(1) dedup: normalized-suffix HashMap ────────────────────────────
+                val rawNorm = number?.normalizePhoneNumber() ?: ""
+                val dedupKey = if (rawNorm.length >= COMPARABLE_PHONE_NUMBER_LENGTH)
+                    rawNorm.takeLast(COMPARABLE_PHONE_NUMBER_LENGTH)
+                else
+                    rawNorm.ifBlank { number.orEmpty() }
+
+                val canonical = normalizedKeyToCanonical[dedupKey]
+                if (canonical != null) {
+                    // Already seen — append to existing group
+                    groupedByNumber[canonical]?.add(recentCall)
+                } else {
+                    // New unique contact
+                    normalizedKeyToCanonical[dedupKey] = recentCall.phoneNumber
+                    groupedByNumber[recentCall.phoneNumber] = mutableListOf(recentCall)
+
+                    // *** Early exit: stop reading as soon as we have enough unique contacts ***
+                    if (groupedByNumber.size >= limit) break
+                }
+                // ────────────────────────────────────────────────────────────────────
+            } while (cursor.moveToNext())
+        }
+
+        // Collapse each group: latest call becomes the parent, rest stored in groupedCalls
+        val recentCalls = mutableListOf<RecentCall>()
+        for ((_, callsForNumber) in groupedByNumber) {
+            val sortedByTime = callsForNumber.sortedByDescending { it.startTS }
+            val latestCall   = sortedByTime[0]
+            recentCalls.add(
+                if (sortedByTime.size > 1) latestCall.copy(groupedCalls = sortedByTime.toMutableList())
+                else latestCall
+            )
+        }
+
+        val elapsed = System.currentTimeMillis() - startTime
+        Log.d(TAG, "[AGG_END] Read $rowsRead rows → ${recentCalls.size} unique contacts in ${elapsed}ms")
+
+        return recentCalls.sortedByDescending { it.startTS }
     }
 
     private fun shouldGroupCalls(callA: RecentCall, callB: RecentCall): Boolean {

@@ -218,7 +218,7 @@ class RecentsFragment(
         val existingRecentCalls = allRecentCalls.filterIsInstance<RecentCall>()
         Log.d(TAG, "[GETRECENTS_CALL] Calling recentsHelper.getGroupedRecentCalls() with ${existingRecentCalls.size} existing at ${System.currentTimeMillis()}")
         // RecentsHelper now handles all data processing including name resolution and grouping by date
-        recentsHelper.getGroupedRecentCalls(existingRecentCalls, Int.MAX_VALUE) {
+        recentsHelper.getGroupedRecentCalls(existingRecentCalls, RecentsHelper.QUERY_LIMIT) {
             callback(it)
         }
     }

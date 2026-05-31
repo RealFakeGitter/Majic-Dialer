@@ -41,6 +41,7 @@ import org.fossify.phone.fragments.FavoritesFragment
 import org.fossify.phone.fragments.MyViewPagerFragment
 import org.fossify.phone.fragments.RecentsFragment
 import org.fossify.phone.helpers.OPEN_DIAL_PAD_AT_LAUNCH
+import org.fossify.phone.helpers.ContactsCache
 import org.fossify.phone.helpers.RecentsHelper
 import org.fossify.phone.helpers.tabsList
 import org.fossify.phone.models.Events
@@ -614,6 +615,10 @@ class MainActivity : SimpleActivity() {
     }
 
     fun cacheContacts() {
+        // Warm the ContactsCache used by RecentsHelper so that by the time the
+        // Recents tab loads, contacts are already in memory (cache hit → instant return).
+        ContactsCache.getContacts(this) { /* fire-and-forget warm-up */ }
+
         val privateCursor = getMyContactsCursor(favoritesOnly = false, withPhoneNumbersOnly = true)
         ContactsHelper(this).getContacts(getAll = true, showOnlyContactsWithNumbers = true) { contacts ->
             if (SMT_PRIVATE !in config.ignoredContactSources) {
