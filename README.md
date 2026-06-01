@@ -1,8 +1,6 @@
 # NovaDial
 
-<p align="center">
-  <img src="graphics/icon.webp" width="120" alt="NovaDial Logo" />
-</p>
+
 
 NovaDial is a modern Android dialer focused on speed, privacy, AMOLED-friendly design, and a clean calling experience.
 
