@@ -4,7 +4,7 @@
   <img src="graphics/icon.webp" width="120" alt="NovaDial Logo" />
 </p>
 
-NovaDial is a modern Android dialer application based on Fossify Phone, redesigned and enhanced for a cleaner, faster, and more customizable calling experience.
+NovaDial is a modern Android dialer focused on speed, privacy, AMOLED-friendly design, and a clean calling experience.
 
 ## About
 
