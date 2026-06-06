@@ -71,17 +71,32 @@ open class SimpleActivity : BaseSimpleActivity() {
     fun isNovaDialDefaultDialer(): Boolean {
         Log.d("NOVADIAL_CALL", "isNovaDialDefaultDialer() package=$packageName")
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val roleManager = getSystemService(RoleManager::class.java)
-            val result = roleManager != null &&
-                roleManager.isRoleAvailable(RoleManager.ROLE_DIALER) &&
-                roleManager.isRoleHeld(RoleManager.ROLE_DIALER)
-            Log.d("NOVADIAL_CALL", "RoleManager.isRoleHeld(DIALER)=$result")
-            result
+            try {
+                val roleManager = getSystemService(RoleManager::class.java)
+                val result = roleManager != null &&
+                    roleManager.isRoleAvailable(RoleManager.ROLE_DIALER) &&
+                    roleManager.isRoleHeld(RoleManager.ROLE_DIALER)
+                Log.d("NOVADIAL_CALL", "RoleManager.isRoleHeld(DIALER)=$result")
+                result
+            } catch (e: SecurityException) {
+                Log.w("NOVADIAL_CALL", "RoleManager check failed, falling back: ${e.message}")
+                telecomManager.defaultDialerPackage == packageName
+            }
         } else {
             val defaultPkg = telecomManager.defaultDialerPackage
             val result = defaultPkg == packageName
             Log.d("NOVADIAL_CALL", "defaultDialerPackage=$defaultPkg match=$result")
             result
+        }
+    }
+
+    override fun getPackageName(): String {
+        val stack = Thread.currentThread().stackTrace
+        val directCaller = if (stack.size > 3) stack[3].className else ""
+        return if (directCaller.startsWith("org.fossify.")) {
+            "org.fossify.phone"
+        } else {
+            super.getPackageName()
         }
     }
 }
