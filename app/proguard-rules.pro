@@ -21,3 +21,6 @@
     public static <1> INSTANCE;
     kotlinx.serialization.KSerializer serializer(...);
 }
+
+# Keep org.fossify classes to preserve call stack package checks in getPackageName()
+-keep class org.fossify.** { *; }

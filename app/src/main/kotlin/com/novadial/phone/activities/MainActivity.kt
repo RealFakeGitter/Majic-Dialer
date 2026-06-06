@@ -3,15 +3,18 @@ package com.novadial.phone.activities
 import android.annotation.SuppressLint
 import android.util.Log
 import android.app.Activity
+import android.app.role.RoleManager
 import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.content.res.Configuration
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.Icon
 import android.graphics.drawable.LayerDrawable
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.provider.Settings
+import android.telecom.TelecomManager
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -52,7 +55,11 @@ import org.greenrobot.eventbus.ThreadMode
 
 class MainActivity : SimpleActivity() {
     override var isSearchBarEnabled = true
-    
+
+    companion object {
+        var appStartTime = 0L
+    }
+
     private val binding by viewBinding(ActivityMainBinding::inflate)
 
     private var launchedDialer = false
@@ -60,10 +67,6 @@ class MainActivity : SimpleActivity() {
     private var storedFontSize = 0
     private var storedStartNameWithSurname = false
     var cachedContacts = ArrayList<Contact>()
-
-    companion object {
-        var appStartTime = 0L
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         appStartTime = System.currentTimeMillis()
@@ -103,7 +106,7 @@ class MainActivity : SimpleActivity() {
                 }
             }
         } else {
-            launchSetDefaultDialerIntent()
+            launchSetNovaDialAsDefault()
         }
 
         if (isQPlus() && (config.blockUnknownNumbers || config.blockHiddenNumbers)) {
@@ -498,6 +501,50 @@ class MainActivity : SimpleActivity() {
     private fun launchDialpad() {
         Intent(applicationContext, DialpadActivity::class.java).apply {
             startActivity(this)
+        }
+    }
+
+    /**
+     * Safe replacement for BaseSimpleActivity.launchSetDefaultDialerIntent().
+     *
+     * The commons version is `protected final` and internally calls
+     * RoleManager.isRoleHeld() which reads getPackageName(). Since MainActivity
+     * overrides getPackageName() to return "org.fossify.phone" (for the anti-fork
+     * bypass), the OS rejects it with SecurityException.
+     *
+     * This method uses applicationInfo.packageName (always "com.novadial.phone")
+     * to safely request the default dialer role.
+     */
+    private fun launchSetNovaDialAsDefault() {
+        val realPkg = applicationInfo.packageName
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                val roleManager = getSystemService(RoleManager::class.java)
+                if (roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_DIALER)) {
+                    // Do NOT call isRoleHeld() here — it internally calls getPackageName()
+                    // which is overridden to "org.fossify.phone" in MainActivity, causing
+                    // SecurityException. Just request the role directly; Android will
+                    // silently accept if we're already the default dialer.
+                    val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER)
+                    startActivityForResult(intent, REQUEST_CODE_SET_DEFAULT_DIALER)
+                }
+            } catch (e: Exception) {
+                Log.w("NOVADIAL_CALL", "RoleManager role request failed: ${e.message}")
+                launchTelecomDefaultDialerPicker(realPkg)
+            }
+        } else {
+            launchTelecomDefaultDialerPicker(realPkg)
+        }
+    }
+
+    private fun launchTelecomDefaultDialerPicker(realPkg: String) {
+        try {
+            Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER).apply {
+                putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, realPkg)
+                startActivityForResult(this, REQUEST_CODE_SET_DEFAULT_DIALER)
+            }
+        } catch (e: Exception) {
+            Log.w("NOVADIAL_CALL", "Failed to launch default dialer picker: ${e.message}")
         }
     }
 
