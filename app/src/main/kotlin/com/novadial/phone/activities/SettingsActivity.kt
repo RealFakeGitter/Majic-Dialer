@@ -100,6 +100,7 @@ class SettingsActivity : SimpleActivity() {
         setupNovaAppearance()
         setupUseEnglish()
         setupLanguage()
+        setupDefaultDialer()
         setupManageBlockedNumbers()
         setupManageSpeedDial()
         setupChangeDateTimeFormat()
@@ -209,6 +210,21 @@ class SettingsActivity : SimpleActivity() {
             settingsLanguageHolder.beVisibleIf(isTiramisuPlus())
             settingsLanguageHolder.setOnClickListener {
                 launchChangeAppLanguageIntent()
+            }
+        }
+    }
+
+    private fun setupDefaultDialer() {
+        binding.apply {
+            if (isNovaDialDefaultDialer()) {
+                settingsDefaultDialer.text = getString(R.string.default_phone_app_status_yes)
+            } else {
+                settingsDefaultDialer.text = getString(R.string.default_phone_app_status_no)
+            }
+            settingsDefaultDialerHolder.setOnClickListener {
+                if (!isNovaDialDefaultDialer()) {
+                    launchSetDefaultDialerIntentSafe()
+                }
             }
         }
     }

@@ -155,4 +155,8 @@ class Config(context: Context) : BaseConfig(context) {
     var cachedRecentCalls: String
         get() = prefs.getString("cached_recent_calls", "") ?: ""
         set(value) = prefs.edit().putString("cached_recent_calls", value).apply()
+
+    var defaultDialerPromptDismissed: Boolean
+        get() = prefs.getBoolean(DEFAULT_DIALER_PROMPT_DISMISSED, false)
+        set(value) = prefs.edit().putBoolean(DEFAULT_DIALER_PROMPT_DISMISSED, value).apply()
 }

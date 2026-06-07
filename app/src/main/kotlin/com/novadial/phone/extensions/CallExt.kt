@@ -56,11 +56,13 @@ fun SimpleActivity.startCallIntent(
             }
         }
     } else {
-        val callIntent = Intent(Intent.ACTION_DIAL, telUri)
-        if (callIntent.resolveActivity(packageManager) != null) {
-            startActivity(callIntent)
-        } else {
-            toast(R.string.no_app_found)
+        showDirectCallDefaultDialerReminder {
+            val callIntent = Intent(Intent.ACTION_DIAL, telUri)
+            if (callIntent.resolveActivity(packageManager) != null) {
+                startActivity(callIntent)
+            } else {
+                toast(R.string.no_app_found)
+            }
         }
     }
 }

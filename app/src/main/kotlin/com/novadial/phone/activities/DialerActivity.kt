@@ -23,7 +23,7 @@ class DialerActivity : SimpleActivity() {
 
             // make sure NovaDial is the default Phone app before initiating an outgoing call
             if (!isNovaDialDefaultDialer()) {
-                launchSetDefaultDialerIntent()
+                launchSetDefaultDialerIntentSafe()
             } else {
                 initOutgoingCall()
             }
