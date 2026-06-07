@@ -300,7 +300,7 @@ class DialpadActivity : SimpleActivity() {
                 if (isNovaDialDefaultDialer()) {
                     getSystemService(TelephonyManager::class.java)?.sendDialerSpecialCode(secretCode)
                 } else {
-                    launchSetDefaultDialerIntent()
+                    launchSetDefaultDialerIntentSafe()
                 }
             } else {
                 val intent =
