@@ -6,17 +6,23 @@ import android.app.NotificationChannel
 import android.app.NotificationManager.IMPORTANCE_DEFAULT
 import android.app.NotificationManager.IMPORTANCE_HIGH
 import android.app.PendingIntent
+import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.os.Build
 import android.telecom.Call
 import android.widget.RemoteViews
 import org.fossify.commons.extensions.notificationManager
 import org.fossify.commons.extensions.setText
 import org.fossify.commons.extensions.setVisibleIf
+import org.fossify.commons.extensions.getProperPrimaryColor
 import com.novadial.phone.R
 import com.novadial.phone.activities.CallActivity
 import com.novadial.phone.receivers.CallActionReceiver
 import com.novadial.phone.extensions.isOutgoing
+import com.novadial.phone.extensions.config
+import com.novadial.phone.models.AudioRoute
 
 class CallNotificationManager(private val context: Context) {
     companion object {
@@ -62,6 +68,36 @@ class CallNotificationManager(private val context: Context) {
                     PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
                 )
 
+            val muteCallIntent = Intent(context, CallActionReceiver::class.java).apply {
+                action = TOGGLE_MUTE
+            }
+            val mutePendingIntent = PendingIntent.getBroadcast(
+                context,
+                2,
+                muteCallIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            )
+
+            val speakerCallIntent = Intent(context, CallActionReceiver::class.java).apply {
+                action = TOGGLE_SPEAKER
+            }
+            val speakerPendingIntent = PendingIntent.getBroadcast(
+                context,
+                3,
+                speakerCallIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            )
+
+            val deleteCallIntent = Intent(context, CallActionReceiver::class.java).apply {
+                action = DISMISS_CALL_NOTIFICATION
+            }
+            val deletePendingIntent = PendingIntent.getBroadcast(
+                context,
+                4,
+                deleteCallIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            )
+
             var callerName = callContact.name.ifEmpty { context.getString(R.string.unknown_caller) }
             if (callContact.numberLabel.isNotEmpty()) {
                 callerName += " - ${callContact.numberLabel}"
@@ -75,13 +111,48 @@ class CallNotificationManager(private val context: Context) {
                 else -> R.string.ongoing_call
             }
 
+            val isMuted = CallManager.inCallService?.callAudioState?.isMuted == true
+            val currentRoute = CallManager.getCallAudioRoute()
+            val isSpeakerOn = currentRoute == AudioRoute.SPEAKER
+
             val collapsedView = RemoteViews(context.packageName, R.layout.call_notification).apply {
                 setText(R.id.notification_caller_name, callerName)
                 setText(R.id.notification_call_status, context.getString(contentTextId))
+                
                 setVisibleIf(R.id.notification_accept_call, callState == Call.STATE_RINGING)
+
+                val isCallActiveOrDialing = callState == Call.STATE_ACTIVE ||
+                                           callState == Call.STATE_DIALING ||
+                                           callState == Call.STATE_CONNECTING ||
+                                           callState == Call.STATE_HOLDING
+                setVisibleIf(R.id.notification_toggle_mute, isCallActiveOrDialing)
+                setVisibleIf(R.id.notification_toggle_speaker, isCallActiveOrDialing)
+
+                val speakerIcon = when (currentRoute) {
+                    AudioRoute.WIRED_HEADSET -> R.drawable.ic_volume_down_vector
+                    AudioRoute.BLUETOOTH -> R.drawable.ic_bluetooth_audio_vector
+                    AudioRoute.EARPIECE -> R.drawable.ic_volume_down_vector
+                    else -> R.drawable.ic_volume_up_vector
+                }
+                setImageViewResource(R.id.notification_toggle_speaker, speakerIcon)
+
+                val activeColor = if (context.config.novaDynamicColors && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    context.getColor(android.R.color.system_accent1_600)
+                } else {
+                    context.getProperPrimaryColor()
+                }
+                val inactiveColor = 0xFF888888.toInt()
+
+                val muteColor = if (isMuted) activeColor else inactiveColor
+                val speakerColor = if (isSpeakerOn) activeColor else inactiveColor
+
+                setInt(R.id.notification_toggle_mute, "setColorFilter", muteColor)
+                setInt(R.id.notification_toggle_speaker, "setColorFilter", speakerColor)
 
                 setOnClickPendingIntent(R.id.notification_decline_call, declinePendingIntent)
                 setOnClickPendingIntent(R.id.notification_accept_call, acceptPendingIntent)
+                setOnClickPendingIntent(R.id.notification_toggle_mute, mutePendingIntent)
+                setOnClickPendingIntent(R.id.notification_toggle_speaker, speakerPendingIntent)
 
                 if (callContactAvatar != null) {
                     setImageViewBitmap(
@@ -101,6 +172,7 @@ class CallNotificationManager(private val context: Context) {
             val builder = Notification.Builder(context, channelId)
                 .setSmallIcon(iconId)
                 .setContentIntent(openAppPendingIntent)
+                .setDeleteIntent(deletePendingIntent)
                 .setCategory(Notification.CATEGORY_CALL)
                 .setCustomContentView(collapsedView)
                 .setOngoing(true)
@@ -116,7 +188,20 @@ class CallNotificationManager(private val context: Context) {
             val notification = builder.build()
             // it's rare but possible for the call state to change by now
             if (CallManager.getState() == callState) {
-                notificationManager.notify(CALL_NOTIFICATION_ID, notification)
+                val service = context as? Service
+                if (service != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        service.startForeground(
+                            CALL_NOTIFICATION_ID,
+                            notification,
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
+                        )
+                    } else {
+                        service.startForeground(CALL_NOTIFICATION_ID, notification)
+                    }
+                } else {
+                    notificationManager.notify(CALL_NOTIFICATION_ID, notification)
+                }
             }
         }
     }
@@ -136,6 +221,15 @@ class CallNotificationManager(private val context: Context) {
     }
 
     fun cancelNotification() {
+        val service = context as? Service
+        if (service != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                service.stopForeground(Service.STOP_FOREGROUND_REMOVE)
+            } else {
+                @Suppress("DEPRECATION")
+                service.stopForeground(true)
+            }
+        }
         notificationManager.cancel(CALL_NOTIFICATION_ID)
     }
 }
