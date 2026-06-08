@@ -87,6 +87,7 @@ class CallService : InCallService() {
         super.onCallAudioStateChanged(audioState)
         if (audioState != null) {
             CallManager.onAudioStateChanged(audioState)
+            callNotificationManager.setupNotification()
         }
     }
 
