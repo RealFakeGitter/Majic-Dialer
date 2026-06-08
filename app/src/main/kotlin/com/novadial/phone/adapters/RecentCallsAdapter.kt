@@ -81,6 +81,7 @@ class RecentCallsAdapter(
 ) : MyRecyclerViewListAdapter<CallLogItem>(activity, recyclerView, RecentCallsDiffCallback(), itemClick) {
 
     private lateinit var outgoingCallIcon: Drawable
+    private lateinit var redOutgoingCallIcon: Drawable
     private lateinit var incomingCallIcon: Drawable
     private lateinit var incomingMissedCallIcon: Drawable
     var fontSize: Float = activity.getTextSize()
@@ -219,6 +220,7 @@ class RecentCallsAdapter(
         val outgoingCallColor = resources.getColor(R.color.color_outgoing_call, theme)
         val incomingCallColor = resources.getColor(R.color.color_incoming_call, theme)
         outgoingCallIcon = resources.getColoredDrawableWithColor(R.drawable.ic_call_made_vector, outgoingCallColor)
+        redOutgoingCallIcon = resources.getColoredDrawableWithColor(R.drawable.ic_call_made_vector, missedCallColor)
         incomingCallIcon = resources.getColoredDrawableWithColor(R.drawable.ic_call_received_vector, incomingCallColor)
         incomingMissedCallIcon = resources.getColoredDrawableWithColor(R.drawable.ic_call_missed_vector, missedCallColor)
     }
@@ -638,7 +640,7 @@ class RecentCallsAdapter(
                 }
 
                 val drawable = when (call.type) {
-                    Calls.OUTGOING_TYPE -> outgoingCallIcon
+                    Calls.OUTGOING_TYPE -> if (call.duration > 0) outgoingCallIcon else redOutgoingCallIcon
                     Calls.MISSED_TYPE -> incomingMissedCallIcon
                     else -> incomingCallIcon
                 }

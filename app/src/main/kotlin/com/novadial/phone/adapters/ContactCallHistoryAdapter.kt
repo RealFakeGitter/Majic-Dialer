@@ -44,6 +44,7 @@ class ContactCallHistoryAdapter(
     private val cachedSimColors = HashMap<Pair<Int, Int>, Int>()
 
     private val outgoingCallIcon: Drawable
+    private val redOutgoingCallIcon: Drawable
     private val incomingCallIcon: Drawable
     private val missedCallIcon: Drawable
     private val missedCallColor: Int
@@ -55,6 +56,7 @@ class ContactCallHistoryAdapter(
         val outgoingCallColor = activity.resources.getColor(R.color.color_outgoing_call, theme)
         val incomingCallColor = activity.resources.getColor(R.color.color_incoming_call, theme)
         outgoingCallIcon = activity.resources.getColoredDrawableWithColor(R.drawable.ic_call_made_vector, outgoingCallColor)
+        redOutgoingCallIcon = activity.resources.getColoredDrawableWithColor(R.drawable.ic_call_made_vector, missedCallColor)
         incomingCallIcon = activity.resources.getColoredDrawableWithColor(R.drawable.ic_call_received_vector, incomingCallColor)
         missedCallIcon = activity.resources.getColoredDrawableWithColor(R.drawable.ic_call_missed_vector, missedCallColor)
     }
@@ -155,7 +157,7 @@ class ContactCallHistoryAdapter(
                 SimpleContactsHelper(root.context).loadContactImage(call.photoUri, itemRecentsImage, call.name)
 
                 val drawable = when (call.type) {
-                    Calls.OUTGOING_TYPE -> outgoingCallIcon
+                    Calls.OUTGOING_TYPE -> if (call.duration > 0) outgoingCallIcon else redOutgoingCallIcon
                     Calls.MISSED_TYPE -> missedCallIcon
                     else -> incomingCallIcon
                 }
