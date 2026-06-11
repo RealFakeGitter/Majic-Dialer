@@ -101,6 +101,14 @@
             android:parentActivityName=".activities.MainActivity" />
 
         <activity
+            android:name=".activities.ContactFullHistoryActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="false"
+            android:label="@string/call_history"
+            android:parentActivityName=".activities.ContactCallHistoryActivity" />
+
+
+        <activity
             android:name=".activities.ConferenceActivity"
             android:configChanges="orientation"
             android:exported="false"
@@ -347,10 +355,10 @@
 
         <activity-alias
             android:name=".activities.SplashActivity.Green"
-            android:enabled="true"
+            android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher"
-            android:roundIcon="@mipmap/ic_launcher"
+            android:icon="@mipmap/ic_launcher_green"
+            android:roundIcon="@mipmap/ic_launcher_green"
             android:targetActivity=".activities.SplashActivity">
 
             <intent-filter>
@@ -472,7 +480,7 @@
 
         <activity-alias
             android:name=".activities.SplashActivity.Grey_black"
-            android:enabled="false"
+            android:enabled="true"
             android:exported="true"
             android:icon="@mipmap/ic_launcher_grey_black"
             android:roundIcon="@mipmap/ic_launcher_grey_black"
@@ -483,5 +491,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity-alias>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 </manifest>

@@ -26,7 +26,7 @@ open class SimpleActivity : BaseSimpleActivity() {
         R.mipmap.ic_launcher_light_blue,
         R.mipmap.ic_launcher_cyan,
         R.mipmap.ic_launcher_teal,
-        R.mipmap.ic_launcher,
+        R.mipmap.ic_launcher_green,
         R.mipmap.ic_launcher_light_green,
         R.mipmap.ic_launcher_lime,
         R.mipmap.ic_launcher_yellow,

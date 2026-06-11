@@ -44,7 +44,7 @@ Download the latest APK from the Releases section or build from source.
 ## Building
 
 ```bash
-git clone https://github.com/dhilipmpms/Phone.git
+git clone https://github.com/dhilipmpms/NovaDial.git
 cd Phone
 ./gradlew assembleCoreDebug
 ```
@@ -67,7 +67,7 @@ GitHub:
 https://github.com/dhilipmpms
 
 NovaDial Repository:
-https://github.com/dhilipmpms/Phone
+https://github.com/dhilipmpms/NovaDial
 
 ## License
 

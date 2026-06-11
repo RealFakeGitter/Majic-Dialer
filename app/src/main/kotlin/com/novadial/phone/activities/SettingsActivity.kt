@@ -64,6 +64,11 @@ class SettingsActivity : SimpleActivity() {
     }
 
     private val binding by viewBinding(ActivitySettingsBinding::inflate)
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+        explicitNulls = false
+    }
     private val getContent =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri != null) {
@@ -470,7 +475,7 @@ class SettingsActivity : SimpleActivity() {
                 inputStream.bufferedReader().readText()
             }
 
-            val objects = Json.decodeFromString<List<RecentCall>>(jsonString)
+            val objects = json.decodeFromString<List<RecentCall>>(jsonString)
 
             if (objects.isEmpty()) {
                 toast(R.string.no_entries_for_importing)
@@ -478,7 +483,9 @@ class SettingsActivity : SimpleActivity() {
             }
 
             RecentsHelper(this).restoreRecentCalls(this, objects) {
-                toast(R.string.importing_successful)
+                runOnUiThread {
+                    toast(R.string.importing_successful)
+                }
             }
         } catch (_: SerializationException) {
             toast(R.string.invalid_file_format)
@@ -491,18 +498,24 @@ class SettingsActivity : SimpleActivity() {
 
     private fun exportCallHistory(recents: List<RecentCall>, uri: Uri) {
         if (recents.isEmpty()) {
-            toast(R.string.no_entries_for_exporting)
+            runOnUiThread {
+                toast(R.string.no_entries_for_exporting)
+            }
         } else {
             try {
                 val outputStream = contentResolver.openOutputStream(uri)!!
 
-                val jsonString = Json.encodeToString(recents)
+                val jsonString = json.encodeToString(recents)
                 outputStream.use {
                     it.write(jsonString.toByteArray())
                 }
-                toast(R.string.exporting_successful)
+                runOnUiThread {
+                    toast(R.string.exporting_successful)
+                }
             } catch (e: Exception) {
-                showErrorToast(e)
+                runOnUiThread {
+                    showErrorToast(e)
+                }
             }
         }
     }
