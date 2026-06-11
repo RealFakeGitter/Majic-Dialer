@@ -7,6 +7,8 @@
     <color name="nova_card">#F3F5F7</color>
     <color name="nova_action_button">#E7F0FF</color>
     <color name="nova_amoled_black">#000000</color>
+    <color name="nova_dark_gray">#121212</color>
+    <color name="nova_light_gray">#242424</color>
     <color name="color_primary">#000000</color>
     <color name="color_primary_dark">#000000</color>
     <color name="color_background">#000000</color>

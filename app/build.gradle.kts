@@ -147,6 +147,7 @@ dependencies {
     implementation(libs.eventbus)
     implementation(libs.libphonenumber)
     implementation(libs.geocoder)
+    implementation("com.google.zxing:core:3.5.3")
     detektPlugins(libs.compose.detekt)
 
     // Jetpack Compose dependencies for custom About page compilation
@@ -156,5 +157,6 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.runtime:runtime")
     implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.ui:ui-viewbinding")
     implementation("androidx.activity:activity-compose:1.9.0")
 }
