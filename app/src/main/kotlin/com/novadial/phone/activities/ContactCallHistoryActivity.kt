@@ -87,6 +87,29 @@ class ContactCallHistoryActivity : SimpleActivity() {
         setupActions()
         updateTextColors(binding.contactCallHistoryCoordinator)
         binding.contactCallHistoryCoordinator.setBackgroundColor(resources.getColor(R.color.nova_amoled_black, theme))
+        binding.contactDetailsScrollView.setBackgroundColor(Color.TRANSPARENT)
+
+        // Force card background colors to preserve them from updateTextColors overrides
+        val cardBgColor = resources.getColor(R.color.nova_card, theme)
+        binding.callStatisticsCard.backgroundTintList = ColorStateList.valueOf(cardBgColor)
+        binding.recentActivityCard.backgroundTintList = ColorStateList.valueOf(cardBgColor)
+        binding.socialAppsCard.backgroundTintList = ColorStateList.valueOf(cardBgColor)
+        binding.contactSettingsCard.backgroundTintList = ColorStateList.valueOf(cardBgColor)
+
+        // Force header colors to preserve them from updateTextColors overrides
+        binding.recentActivityIcon.applyColorFilter(accentColor)
+        binding.recentActivityTitle.setTextColor(accentColor)
+        binding.socialAppsIcon.applyColorFilter(accentColor)
+        binding.socialAppsTitle.setTextColor(accentColor)
+        binding.contactSettingsIcon.applyColorFilter(accentColor)
+        binding.contactSettingsTitle.setTextColor(accentColor)
+        binding.callStatisticsTitle.setTextColor(accentColor)
+
+        // Force the icons inside the rounded squares to have proper visible tint (matching text color)
+        val textColor = getProperTextColor()
+        binding.customRingtoneIcon.applyColorFilter(textColor)
+        binding.shareContactIcon.applyColorFilter(textColor)
+        binding.qrCodeIcon.applyColorFilter(textColor)
 
         queryContactInfo()
         loadCallHistory()

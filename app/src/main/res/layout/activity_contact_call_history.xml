@@ -175,6 +175,7 @@
 
             <!-- Section 3: Call Statistics Card -->
             <LinearLayout
+                android:id="@+id/call_statistics_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
@@ -185,6 +186,7 @@
                 android:padding="16dp">
 
                 <org.fossify.commons.views.MyTextView
+                    android:id="@+id/call_statistics_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Call Statistics"
@@ -278,6 +280,7 @@
 
             <!-- Section 4: Recent Activity Card -->
             <LinearLayout
+                android:id="@+id/recent_activity_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
@@ -294,12 +297,14 @@
                     android:gravity="center_vertical">
 
                     <ImageView
+                        android:id="@+id/recent_activity_icon"
                         android:layout_width="18dp"
                         android:layout_height="18dp"
-                        android:src="@drawable/ic_call_made_vector"
+                        android:src="@drawable/ic_clock_vector"
                         android:tint="@color/color_accent" />
 
                     <org.fossify.commons.views.MyTextView
+                        android:id="@+id/recent_activity_title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
@@ -357,12 +362,14 @@
                     android:gravity="center_vertical">
 
                     <ImageView
+                        android:id="@+id/social_apps_icon"
                         android:layout_width="18dp"
                         android:layout_height="18dp"
                         android:src="@drawable/ic_globe"
                         android:tint="@color/color_accent" />
 
                     <org.fossify.commons.views.MyTextView
+                        android:id="@+id/social_apps_title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
@@ -464,13 +471,29 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <org.fossify.commons.views.MyTextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Contact Settings"
-                    android:textColor="@color/color_accent"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:id="@+id/contact_settings_icon"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_settings_cog_vector"
+                        android:tint="@color/color_accent" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/contact_settings_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="Contact Settings"
+                        android:textColor="@color/color_accent"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
                 <!-- Custom Ringtone Row -->
                 <LinearLayout
@@ -484,11 +507,18 @@
                     android:focusable="true"
                     android:background="?attr/selectableItemBackground">
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_bell_vector"
-                        android:tint="@color/color_accent" />
+                    <FrameLayout
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/contact_setting_icon_bg">
+
+                        <ImageView
+                            android:id="@+id/custom_ringtone_icon"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_music_note" />
+                    </FrameLayout>
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -534,11 +564,18 @@
                     android:focusable="true"
                     android:background="?attr/selectableItemBackground">
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_share_vector"
-                        android:tint="@color/color_accent" />
+                    <FrameLayout
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/contact_setting_icon_bg">
+
+                        <ImageView
+                            android:id="@+id/share_contact_icon"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_share_vector" />
+                    </FrameLayout>
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -583,11 +620,18 @@
                     android:focusable="true"
                     android:background="?attr/selectableItemBackground">
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_qr_code"
-                        android:tint="@color/color_accent" />
+                    <FrameLayout
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/contact_setting_icon_bg">
+
+                        <ImageView
+                            android:id="@+id/qr_code_icon"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_qr_code" />
+                    </FrameLayout>
 
                     <LinearLayout
                         android:layout_width="0dp"
