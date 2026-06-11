@@ -101,6 +101,14 @@
             android:parentActivityName=".activities.MainActivity" />
 
         <activity
+            android:name=".activities.ContactFullHistoryActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="false"
+            android:label="@string/call_history"
+            android:parentActivityName=".activities.ContactCallHistoryActivity" />
+
+
+        <activity
             android:name=".activities.ConferenceActivity"
             android:configChanges="orientation"
             android:exported="false"
