@@ -14,6 +14,7 @@ import com.novadial.phone.extensions.powerManager
 import com.novadial.phone.helpers.CallManager
 import com.novadial.phone.helpers.CallNotificationManager
 import com.novadial.phone.helpers.NoCall
+import com.novadial.phone.helpers.RingtoneVolumeHelper
 import com.novadial.phone.models.Events
 import org.greenrobot.eventbus.EventBus
 
@@ -28,6 +29,7 @@ class CallService : InCallService() {
             } else {
                 callNotificationManager.setupNotification()
             }
+            RingtoneVolumeHelper.handleCallStateChanged(this@CallService, call)
         }
     }
 
@@ -36,6 +38,7 @@ class CallService : InCallService() {
         CallManager.onCallAdded(call)
         CallManager.inCallService = this
         call.registerCallback(callListener)
+        RingtoneVolumeHelper.handleCallStateChanged(this, call)
 
         // Incoming/Outgoing (locked): high priority (FSI)
         // Incoming (unlocked): if user opted in, low priority ➜ manual activity start, otherwise high priority (FSI)
@@ -68,6 +71,7 @@ class CallService : InCallService() {
     override fun onCallRemoved(call: Call) {
         super.onCallRemoved(call)
         call.unregisterCallback(callListener)
+        RingtoneVolumeHelper.handleCallRemoved(this, call)
         val wasPrimaryCall = call == CallManager.getPrimaryCall()
         CallManager.onCallRemoved(call)
         if (CallManager.getPhoneState() == NoCall) {
@@ -94,5 +98,6 @@ class CallService : InCallService() {
     override fun onDestroy() {
         super.onDestroy()
         callNotificationManager.cancelNotification()
+        RingtoneVolumeHelper.restoreVolume(this)
     }
 }

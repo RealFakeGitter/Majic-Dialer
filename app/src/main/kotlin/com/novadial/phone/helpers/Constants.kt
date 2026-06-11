@@ -22,6 +22,9 @@ const val ALWAYS_SHOW_FULLSCREEN = "always_show_fullscreen"
 const val NOVA_DYNAMIC_COLORS = "nova_dynamic_colors"
 const val NOVA_AMOLED_BLACK = "nova_amoled_black"
 const val DEFAULT_DIALER_PROMPT_DISMISSED = "default_dialer_prompt_dismissed"
+const val MAX_RINGTONE_VOLUME_INCOMING = "max_ringtone_volume_incoming"
+const val PREVIOUS_RINGTONE_VOLUME = "previous_ringtone_volume"
+const val IS_RINGTONE_VOLUME_BOOSTED = "is_ringtone_volume_boosted"
 
 const val ALL_TABS_MASK = TAB_FAVORITES or TAB_CALL_HISTORY or TAB_CONTACTS
 

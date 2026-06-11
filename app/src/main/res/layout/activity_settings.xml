@@ -419,6 +419,48 @@
 
             </RelativeLayout>
 
+            <RelativeLayout
+                android:id="@+id/settings_max_volume_incoming_holder"
+                style="@style/SettingsHolderTextViewStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_toStartOf="@id/settings_max_volume_incoming"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:paddingEnd="16dp"
+                    tools:ignore="UseCompoundDrawables">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/settings_max_volume_incoming_label"
+                        style="@style/SettingsTextLabelStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/max_ringtone_volume_incoming" />
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/settings_max_volume_incoming_description"
+                        style="@style/SettingsTextValueStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/max_ringtone_volume_incoming_description" />
+                </LinearLayout>
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/settings_max_volume_incoming"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:clickable="false"
+                    android:focusable="false" />
+
+            </RelativeLayout>
+
             <include
                 android:id="@+id/settings_dialpad_divider"
                 layout="@layout/divider" />

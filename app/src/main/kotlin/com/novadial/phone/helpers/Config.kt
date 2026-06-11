@@ -159,4 +159,16 @@ class Config(context: Context) : BaseConfig(context) {
     var defaultDialerPromptDismissed: Boolean
         get() = prefs.getBoolean(DEFAULT_DIALER_PROMPT_DISMISSED, false)
         set(value) = prefs.edit().putBoolean(DEFAULT_DIALER_PROMPT_DISMISSED, value).apply()
+
+    var maxRingtoneVolumeIncoming: Boolean
+        get() = prefs.getBoolean(MAX_RINGTONE_VOLUME_INCOMING, false)
+        set(maxRingtoneVolumeIncoming) = prefs.edit().putBoolean(MAX_RINGTONE_VOLUME_INCOMING, maxRingtoneVolumeIncoming).apply()
+
+    var previousRingtoneVolume: Int
+        get() = prefs.getInt(PREVIOUS_RINGTONE_VOLUME, -1)
+        set(previousRingtoneVolume) = prefs.edit().putInt(PREVIOUS_RINGTONE_VOLUME, previousRingtoneVolume).apply()
+
+    var isRingtoneVolumeBoosted: Boolean
+        get() = prefs.getBoolean(IS_RINGTONE_VOLUME_BOOSTED, false)
+        set(isRingtoneVolumeBoosted) = prefs.edit().putBoolean(IS_RINGTONE_VOLUME_BOOSTED, isRingtoneVolumeBoosted).apply()
 }

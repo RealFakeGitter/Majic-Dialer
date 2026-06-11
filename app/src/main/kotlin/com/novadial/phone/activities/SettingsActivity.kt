@@ -46,6 +46,7 @@ import com.novadial.phone.extensions.canLaunchAccountsConfiguration
 import com.novadial.phone.extensions.config
 import com.novadial.phone.extensions.launchAccountsConfiguration
 import com.novadial.phone.helpers.RecentsHelper
+import com.novadial.phone.helpers.RingtoneVolumeHelper
 import com.novadial.phone.models.RecentCall
 import java.util.Locale
 import kotlin.system.exitProcess
@@ -119,6 +120,7 @@ class SettingsActivity : SimpleActivity() {
         setupDisableProximitySensor()
         setupDisableSwipeToAnswer()
         setupAlwaysShowFullscreen()
+        setupMaxVolumeIncoming()
         setupCallsExport()
         setupCallsImport()
         updateTextColors(binding.settingsHolder)
@@ -430,6 +432,20 @@ class SettingsActivity : SimpleActivity() {
             settingsAlwaysShowFullscreenHolder.setOnClickListener {
                 settingsAlwaysShowFullscreen.toggle()
                 config.alwaysShowFullscreen = settingsAlwaysShowFullscreen.isChecked
+            }
+        }
+    }
+
+    private fun setupMaxVolumeIncoming() {
+        binding.apply {
+            settingsMaxVolumeIncoming.isChecked = config.maxRingtoneVolumeIncoming
+            settingsMaxVolumeIncomingHolder.setOnClickListener {
+                settingsMaxVolumeIncoming.toggle()
+                val isChecked = settingsMaxVolumeIncoming.isChecked
+                config.maxRingtoneVolumeIncoming = isChecked
+                if (!isChecked) {
+                    RingtoneVolumeHelper.restoreVolume(this@SettingsActivity)
+                }
             }
         }
     }
