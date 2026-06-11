@@ -77,7 +77,7 @@ class AboutActivity : BaseComposeActivity() {
                         SettingsListItem(
                             tint = SimpleTheme.colorScheme.onSurface,
                             click = {
-                                launchViewIntent("https://github.com/dhilipmpms/Phone/issues?q=is:open+is:issue+label:bug")
+                                launchViewIntent("https://github.com/dhilipmpms/NovaDial/issues?q=is:open+is:issue+label:bug")
                             },
                             text = context.getString(R.string.known_issues),
                             icon = R.drawable.ic_bug_report_outline_vector
@@ -122,10 +122,10 @@ class AboutActivity : BaseComposeActivity() {
                         SettingsListItem(
                             tint = SimpleTheme.colorScheme.onSurface,
                             click = {
-                                launchViewIntent("https://github.com/dhilipmpms/Phone")
+                                launchViewIntent("https://github.com/dhilipmpms/NovaDial")
                             },
                             text = "NovaDial Source",
-                            description = "https://github.com/dhilipmpms/Phone",
+                            description = "https://github.com/dhilipmpms/NovaDial",
                             icon = R.drawable.ic_github_vector
                         )
 
@@ -146,10 +146,10 @@ class AboutActivity : BaseComposeActivity() {
                         SettingsListItem(
                             tint = SimpleTheme.colorScheme.onSurface,
                             click = {
-                                launchViewIntent("https://github.com/dhilipmpms/Phone")
+                                launchViewIntent("https://github.com/dhilipmpms/NovaDial")
                             },
                             text = "⭐ Star NovaDial on GitHub",
-                            description = "https://github.com/dhilipmpms/Phone",
+                            description = "https://github.com/dhilipmpms/NovaDial",
                             icon = R.drawable.ic_github_vector
                         )
 
