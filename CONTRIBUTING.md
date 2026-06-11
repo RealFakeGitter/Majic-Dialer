@@ -1,8 +1,22 @@
-### Reporting
-Before you report something, read the reporting rules [here](https://github.com/FossifyOrg/General-Discussion#how-do-i-suggest-an-improvement-ask-a-question-or-report-an-issue) please.
+# Contributing to NovaDial
 
-### Contributing as a developer
-Some instructions about code style and everything that has to be done to increase the chance of your code getting accepted can be found at the [General Discussion](https://github.com/FossifyOrg/General-Discussion#contribution-rules-for-developers) section. 
+Thank you for your interest in contributing to NovaDial.
 
-### Contributing as a non developer
-In case you just want to for example improve a translation, you can find the way of doing it [here](https://github.com/FossifyOrg/General-Discussion#how-can-i-suggest-an-edit-to-a-file).
+## Reporting Issues
+
+If you find a bug or have a feature request, please open an issue on the NovaDial GitHub repository [Issues](https://github.com/dhilipmpms/NovaDial/issues).
+
+## Pull Requests
+
+Pull requests are welcome. Please:
+
+* Keep changes focused and well documented.
+* Test your changes before submitting.
+* Follow existing code style where possible.
+
+## Code of Conduct
+
+Be respectful and constructive when interacting with other contributors.
+
+Thank you for helping improve NovaDial.
+
