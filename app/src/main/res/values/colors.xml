@@ -9,8 +9,14 @@
     <color name="nova_amoled_black">#000000</color>
     <color name="nova_dark_gray">#121212</color>
     <color name="nova_light_gray">#242424</color>
-    <color name="color_primary">#000000</color>
-    <color name="color_primary_dark">#000000</color>
+    <!-- #010101 is visually identical to black but avoids the early-exit guard
+         in the library's LineColorPickerDialog (which checks color == color_primary).
+         The actual icon color default is overridden separately as pure #000000. -->
+    <color name="color_primary">#010101</color>
+    <color name="color_primary_dark">#010101</color>
+    <!-- Override the library's default_app_icon_color so config stores #000000
+         (md_grey_black), which the color picker correctly maps to icon index 18. -->
+    <color name="default_app_icon_color">#000000</color>
     <color name="color_background">#000000</color>
     <color name="color_secondary">#FFFFFF</color>
     <color name="color_on_secondary">#000000</color>
