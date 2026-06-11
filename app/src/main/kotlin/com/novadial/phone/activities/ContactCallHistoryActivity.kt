@@ -1,17 +1,26 @@
 package com.novadial.phone.activities
 
+import android.app.Activity
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Intent
 import android.content.res.ColorStateList
+import android.graphics.Bitmap
+import android.graphics.Color
+import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.CallLog.Calls
 import android.provider.ContactsContract
 import android.telecom.VideoProfile
+import java.io.File
+import androidx.core.content.FileProvider
 import android.util.TypedValue
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.ImageView
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.MultiFormatWriter
 import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.adjustForContrast
 import org.fossify.commons.extensions.applyColorFilter
@@ -27,6 +36,8 @@ import org.fossify.commons.extensions.getContrastColor
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.getTextSize
+import org.fossify.commons.extensions.getAlertDialogBuilder
+import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.extensions.hasPermission
 import org.fossify.commons.extensions.launchSendSMSIntent
 import org.fossify.commons.extensions.setupViewBackground
@@ -51,6 +62,7 @@ class ContactCallHistoryActivity : SimpleActivity() {
     private val binding by viewBinding(ActivityContactCallHistoryBinding::inflate)
     private lateinit var seedCall: RecentCall
     private var contactId: Long? = null
+    private var contactName: String? = null
     private var isFavorite = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -132,9 +144,45 @@ class ContactCallHistoryActivity : SimpleActivity() {
                 }
             }
 
-            deleteContactRow.setOnClickListener {
-                deleteContact()
+            whatsappButton.setOnClickListener {
+                launchWhatsApp()
             }
+
+            telegramButton.setOnClickListener {
+                launchTelegram()
+            }
+
+            customRingtoneRow.setOnClickListener {
+                pickCustomRingtone()
+            }
+
+            shareContactRow.setOnClickListener {
+                shareContact()
+            }
+
+            qrCodeRow.setOnClickListener {
+                showContactQRCode()
+            }
+        }
+    }
+
+    private fun launchWhatsApp() {
+        val number = seedCall.phoneNumber.filter { it.isDigit() || it == '+' }
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://api.whatsapp.com/send?phone=$number"))
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            toast("WhatsApp is not installed")
+        }
+    }
+
+    private fun launchTelegram() {
+        val number = seedCall.phoneNumber.filter { it.isDigit() || it == '+' }
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("tg://resolve?phone=$number"))
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            toast("Telegram is not installed")
         }
     }
 
@@ -153,7 +201,9 @@ class ContactCallHistoryActivity : SimpleActivity() {
     private fun queryContactInfo() {
         if (seedCall.isUnknownNumber) {
             binding.contactSettingsCard.beGone()
+            binding.socialAppsCard.beGone()
             contactId = null
+            contactName = null
             invalidateOptionsMenu()
             return
         }
@@ -166,24 +216,39 @@ class ContactCallHistoryActivity : SimpleActivity() {
                 )
                 val projection = arrayOf(
                     ContactsContract.PhoneLookup._ID,
-                    ContactsContract.PhoneLookup.STARRED
+                    ContactsContract.PhoneLookup.STARRED,
+                    ContactsContract.PhoneLookup.PHOTO_URI,
+                    ContactsContract.PhoneLookup.DISPLAY_NAME
                 )
                 contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
                     if (cursor.moveToFirst()) {
                         val idIndex = cursor.getColumnIndex(ContactsContract.PhoneLookup._ID)
                         val starredIndex = cursor.getColumnIndex(ContactsContract.PhoneLookup.STARRED)
+                        val photoUriIndex = cursor.getColumnIndex(ContactsContract.PhoneLookup.PHOTO_URI)
+                        val nameIndex = cursor.getColumnIndex(ContactsContract.PhoneLookup.DISPLAY_NAME)
                         
                         contactId = if (idIndex >= 0) cursor.getLong(idIndex) else null
                         isFavorite = if (starredIndex >= 0) cursor.getInt(starredIndex) == 1 else false
+                        val photoUri = if (photoUriIndex >= 0) cursor.getString(photoUriIndex) ?: "" else ""
+                        val name = if (nameIndex >= 0) cursor.getString(nameIndex) ?: seedCall.name else seedCall.name
+                        contactName = name
                         
                         runOnUiThread {
                             binding.contactSettingsCard.beVisible()
+                            binding.socialAppsCard.beVisible()
                             invalidateOptionsMenu()
+                            if (name != seedCall.name) {
+                                binding.contactName.text = name
+                            }
+                            SimpleContactsHelper(this@ContactCallHistoryActivity).loadContactImage(photoUri, binding.contactImage, name)
+                            updateRingtoneSubtitle()
                         }
                     } else {
                         runOnUiThread {
                             binding.contactSettingsCard.beGone()
+                            binding.socialAppsCard.beGone()
                             contactId = null
+                            contactName = null
                             invalidateOptionsMenu()
                         }
                     }
@@ -191,9 +256,29 @@ class ContactCallHistoryActivity : SimpleActivity() {
             } catch (e: Exception) {
                 runOnUiThread {
                     binding.contactSettingsCard.beGone()
+                    binding.socialAppsCard.beGone()
                     contactId = null
+                    contactName = null
                     invalidateOptionsMenu()
                 }
+            }
+        }
+    }
+
+    private fun updateRingtoneSubtitle() {
+        ensureBackgroundThread {
+            val ringtoneUriString = getContactRingtoneUri()
+            val ringtoneTitle = if (ringtoneUriString.isNullOrEmpty()) {
+                "Default"
+            } else {
+                try {
+                    RingtoneManager.getRingtone(this, Uri.parse(ringtoneUriString))?.getTitle(this) ?: "Default"
+                } catch (e: Exception) {
+                    "Default"
+                }
+            }
+            runOnUiThread {
+                binding.customRingtoneSubtitle.text = ringtoneTitle
             }
         }
     }
@@ -234,25 +319,141 @@ class ContactCallHistoryActivity : SimpleActivity() {
         }
     }
 
-    private fun deleteContact() {
+    private fun pickCustomRingtone() {
+        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_RINGTONE)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
+            val currentRingtone = getContactRingtoneUri()
+            if (currentRingtone != null) {
+                putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(currentRingtone))
+            }
+        }
+        try {
+            startActivityForResult(intent, REQUEST_CODE_PICK_RINGTONE)
+        } catch (e: Exception) {
+            toast("No app found to pick ringtone")
+        }
+    }
+
+    private fun getContactRingtoneUri(): String? {
+        val currentContactId = contactId ?: return null
+        val uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, currentContactId)
+        val projection = arrayOf(ContactsContract.Contacts.CUSTOM_RINGTONE)
+        return try {
+            contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    cursor.getString(0)
+                } else {
+                    null
+                }
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun shareContact() {
         val currentContactId = contactId ?: return
-        val question = String.format(getString(R.string.deletion_confirmation), seedCall.name)
-        org.fossify.commons.dialogs.ConfirmationDialog(this, question) {
-            handlePermission(PERMISSION_WRITE_CONTACTS) {
-                ensureBackgroundThread {
-                    try {
-                        val contactUri = ContentUris.withAppendedId(
-                            ContactsContract.Contacts.CONTENT_URI,
-                            currentContactId
-                        )
-                        contentResolver.delete(contactUri, null, null)
-                        runOnUiThread {
-                            finish()
-                        }
-                    } catch (e: Exception) {
-                        runOnUiThread {
-                            toast("Failed to delete contact")
-                        }
+        ensureBackgroundThread {
+            try {
+                val nameToUse = contactName ?: seedCall.name
+                val vCardText = "BEGIN:VCARD\nVERSION:3.0\nFN:$nameToUse\nTEL;TYPE=CELL:${seedCall.phoneNumber}\nEND:VCARD"
+                
+                val vCardFile = File(cacheDir, "$nameToUse.vcf")
+                vCardFile.writeText(vCardText)
+                
+                val shareUri = FileProvider.getUriForFile(this, "$packageName.provider", vCardFile)
+                
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/x-vcard"
+                    putExtra(Intent.EXTRA_STREAM, shareUri)
+                    putExtra(Intent.EXTRA_SUBJECT, nameToUse)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                runOnUiThread {
+                    startActivity(Intent.createChooser(intent, "Share Contact"))
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    toast("Failed to share contact")
+                }
+            }
+        }
+    }
+
+    private fun showContactQRCode() {
+        val currentContactId = contactId ?: return
+        ensureBackgroundThread {
+            val nameToUse = contactName ?: seedCall.name
+            val vCardText = "BEGIN:VCARD\nVERSION:3.0\nFN:$nameToUse\nTEL;TYPE=CELL:${seedCall.phoneNumber}\nEND:VCARD"
+
+            val qrBitmap = generateQRCode(vCardText, 500, 500)
+            runOnUiThread {
+                if (qrBitmap != null) {
+                    displayQRCodeDialog(qrBitmap)
+                } else {
+                    toast("Failed to generate contact QR Code")
+                }
+            }
+        }
+    }
+
+    private fun generateQRCode(text: String, width: Int, height: Int): Bitmap? {
+        return try {
+            val bitMatrix = MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, width, height)
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            for (x in 0 until width) {
+                for (y in 0 until height) {
+                    bitmap.setPixel(x, y, if (bitMatrix.get(x, y)) Color.BLACK else Color.WHITE)
+                }
+            }
+            bitmap
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun displayQRCodeDialog(qrBitmap: Bitmap) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_qr_code, null)
+        val qrImageView = dialogView.findViewById<ImageView>(R.id.qr_image_view)
+        val nameTextView = dialogView.findViewById<org.fossify.commons.views.MyTextView>(R.id.qr_contact_name)
+        val phoneTextView = dialogView.findViewById<org.fossify.commons.views.MyTextView>(R.id.qr_contact_phone)
+        val closeButton = dialogView.findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.qr_close_button)
+
+        qrImageView.setImageBitmap(qrBitmap)
+        val nameToUse = contactName ?: seedCall.name
+        nameTextView.text = nameToUse
+        phoneTextView.text = seedCall.phoneNumber
+
+        getAlertDialogBuilder().apply {
+            setupDialogStuff(dialogView, this) { alertDialog ->
+                closeButton.setOnClickListener {
+                    alertDialog.dismiss()
+                }
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == Activity.RESULT_OK && requestCode == REQUEST_CODE_PICK_RINGTONE) {
+            val ringtoneUri = data?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            val currentContactId = contactId ?: return
+            ensureBackgroundThread {
+                try {
+                    val values = ContentValues().apply {
+                        put(ContactsContract.Contacts.CUSTOM_RINGTONE, ringtoneUri?.toString())
+                    }
+                    val contactUri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, currentContactId)
+                    contentResolver.update(contactUri, values, null, null)
+                    runOnUiThread {
+                        toast("Custom ringtone updated")
+                        updateRingtoneSubtitle()
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        toast("Failed to update ringtone")
                     }
                 }
             }
@@ -431,5 +632,6 @@ class ContactCallHistoryActivity : SimpleActivity() {
         const val EXTRA_SPECIFIC_NUMBER = "specific_number"
         const val EXTRA_SPECIFIC_TYPE = "specific_type"
         const val EXTRA_IS_UNKNOWN_NUMBER = "is_unknown_number"
+        private const val REQUEST_CODE_PICK_RINGTONE = 1001
     }
 }

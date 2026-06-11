@@ -147,6 +147,7 @@ dependencies {
     implementation(libs.eventbus)
     implementation(libs.libphonenumber)
     implementation(libs.geocoder)
+    implementation("com.google.zxing:core:3.5.3")
     detektPlugins(libs.compose.detekt)
 
     // Jetpack Compose dependencies for custom About page compilation
