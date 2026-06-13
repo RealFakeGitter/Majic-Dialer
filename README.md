@@ -34,7 +34,11 @@ The goal of NovaDial is to provide a modern and feature-rich dialer while remain
 <p align="center">
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1_en-US.png" width="30%" alt="Call History" />
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2_en-US.png" width="30%" alt="Dialer" />
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3_en-US.png" width="30%" alt="About" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3_en-US.png" width="30%" alt="Call Details" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4_en-US.png" width="30%" alt="Contact Details" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5_en-US.png" width="30%" alt="QR Code" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/6_en-US.png" width="30%" alt="About" />
+
 </p>
 
 ## Installation
@@ -45,7 +49,7 @@ Download the latest APK from the Releases section or build from source.
 
 ```bash
 git clone https://github.com/dhilipmpms/NovaDial.git
-cd Phone
+cd NovaDial
 ./gradlew assembleCoreDebug
 ```
 
