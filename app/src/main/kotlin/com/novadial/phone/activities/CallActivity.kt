@@ -656,7 +656,7 @@ class CallActivity : SimpleActivity() {
         when (state) {
             Call.STATE_RINGING -> callRinging()
             Call.STATE_ACTIVE -> callStarted()
-            Call.STATE_DISCONNECTED -> endCall()
+            Call.STATE_DISCONNECTED, Call.STATE_DISCONNECTING -> endCall()
             Call.STATE_CONNECTING, Call.STATE_DIALING -> initOutgoingCallUI()
             Call.STATE_SELECT_PHONE_ACCOUNT -> showPhoneAccountPicker()
         }
