@@ -41,7 +41,6 @@ import org.fossify.commons.extensions.getPopupMenuTheme
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.getTextSize
 import org.fossify.commons.extensions.highlightTextPart
-import org.fossify.commons.extensions.isOrWasThankYouInstalled
 import org.fossify.commons.extensions.launchSendSMSIntent
 import org.fossify.commons.extensions.setupViewBackground
 import org.fossify.commons.helpers.PERMISSION_WRITE_CALL_LOG
