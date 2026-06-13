@@ -46,6 +46,7 @@ class RecentsFragment(
     private lateinit var binding: FragmentRecentsBinding
     private var allRecentCalls = listOf<CallLogItem>()
     private var recentsAdapter: RecentCallsAdapter? = null
+    private val newlyAddedCalls = mutableListOf<RecentCall>()
 
     private var searchQuery: String? = null
     private var recentsHelper = RecentsHelper(context)
@@ -97,6 +98,7 @@ class RecentsFragment(
         Log.d("StartupPerf", "[RECENTS_START] Recents loading started at ${System.currentTimeMillis()}")
         if (invalidate) {
             allRecentCalls = emptyList()
+            newlyAddedCalls.clear()
         }
 
         if (allRecentCalls.isEmpty() && searchQuery.isNullOrEmpty()) {
@@ -216,6 +218,7 @@ class RecentsFragment(
                     showOverflowMenu = true,
                     itemDelete = { deleted ->
                         allRecentCalls = allRecentCalls.filter { it !in deleted }
+                        newlyAddedCalls.removeAll { it in deleted }
                     },
                     itemClick = {
                         val recentCall = it as RecentCall
@@ -249,13 +252,73 @@ class RecentsFragment(
         Log.d(TAG, "[REFRESH_START] Refresh call log started at ${System.currentTimeMillis()}")
         getRecentCalls {
             Log.d(TAG, "[REFRESH_CALLBACK] Callback received with ${it.size} items at ${System.currentTimeMillis()}")
-            allRecentCalls = it
+            
+            // Extract all call IDs from the returned database results (including grouped calls)
+            val dbCallIds = it.filterIsInstance<RecentCall>().flatMap { call ->
+                call.groupedCalls ?: listOf(call)
+            }.map { call -> call.id }.toSet()
+
+            // Remove items from newlyAddedCalls that are now present in the database results
+            newlyAddedCalls.removeAll { pending -> pending.id in dbCallIds }
+
+            // Merge any remaining newlyAddedCalls into the database results
+            val mergedList = mergeAndGroupCalls(it.filterIsInstance<RecentCall>(), newlyAddedCalls)
+
+            allRecentCalls = mergedList
             if (searchQuery.isNullOrEmpty()) {
-                activity?.runOnUiThread { gotRecents(it) }
+                activity?.runOnUiThread { gotRecents(mergedList) }
             } else {
                 updateSearchResult()
             }
         }
+    }
+
+    private fun mergeAndGroupCalls(
+        dbCalls: List<RecentCall>,
+        pendingCalls: List<RecentCall>
+    ): List<CallLogItem> {
+        if (pendingCalls.isEmpty()) {
+            return groupCallsByDate(dbCalls)
+        }
+        
+        val merged = dbCalls.toMutableList()
+        for (pending in pendingCalls) {
+            val existingGroupIndex = merged.indexOfFirst {
+                recentsHelper.belongToSameGroup(it, pending)
+            }
+            if (existingGroupIndex != -1) {
+                val existingGroup = merged[existingGroupIndex]
+                val updatedGroupedCalls = existingGroup.groupedCalls?.toMutableList() ?: mutableListOf(existingGroup)
+                if (updatedGroupedCalls.none { it.id == pending.id }) {
+                    updatedGroupedCalls.add(0, pending)
+                }
+                val updatedParent = pending.copy(groupedCalls = updatedGroupedCalls)
+                merged.removeAt(existingGroupIndex)
+                merged.add(0, updatedParent)
+            } else {
+                if (merged.none { it.id == pending.id }) {
+                    merged.add(0, pending)
+                }
+            }
+        }
+        
+        merged.sortByDescending { it.startTS }
+        
+        return groupCallsByDate(merged)
+    }
+
+    private fun groupCallsByDate(recentCalls: List<RecentCall>): List<CallLogItem> {
+        val callLog = mutableListOf<CallLogItem>()
+        var lastDayCode = ""
+        for (call in recentCalls) {
+            val currentDayCode = call.dayCode
+            if (currentDayCode != lastDayCode) {
+                callLog += CallLogItem.Date(timestamp = call.startTS, dayCode = currentDayCode)
+                lastDayCode = currentDayCode
+            }
+            callLog += call
+        }
+        return callLog
     }
 
     private fun getRecentCalls(callback: (List<CallLogItem>) -> Unit) {
@@ -279,6 +342,10 @@ class RecentsFragment(
             if (isDuplicate) {
                 Log.d(TAG, "Call log entry already exists in the list, skipping")
                 return@runOnUiThread
+            }
+
+            if (newlyAddedCalls.none { it.id == newCall.id }) {
+                newlyAddedCalls.add(newCall)
             }
 
             val currentRecentCalls = allRecentCalls.filterIsInstance<RecentCall>().toMutableList()

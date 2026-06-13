@@ -17,6 +17,9 @@ object CallLogWatcher {
     private const val TAG = "CallLogWatcher"
     private var lastCallLogId: Int = -1
 
+    private val handler = Handler(Looper.getMainLooper())
+    private var checkRunnable: Runnable? = null
+
     fun ensureRegistered(context: Context) {
         if (observerRegistered) return
         if (!context.hasPermission(PERMISSION_READ_CALL_LOG)) return
@@ -36,11 +39,16 @@ object CallLogWatcher {
                 }
             }
 
-            val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            val observer = object : ContentObserver(handler) {
                 override fun onChange(selfChange: Boolean) {
                     super.onChange(selfChange)
-                    Log.d(TAG, "Call log changed globally, checking for updates...")
-                    checkForUpdates(appContext)
+                    Log.d(TAG, "Call log changed globally, debouncing check...")
+                    checkRunnable?.let { handler.removeCallbacks(it) }
+                    val r = Runnable {
+                        checkForUpdates(appContext)
+                    }
+                    checkRunnable = r
+                    handler.postDelayed(r, 200L)
                 }
             }
             resolver.registerContentObserver(
