@@ -1,6 +1,9 @@
 package com.novadial.phone.fragments
 
 import android.content.Context
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
 import android.util.Log
 import org.fossify.commons.extensions.baseConfig
@@ -46,6 +49,11 @@ class RecentsFragment(
 
     private var searchQuery: String? = null
     private var recentsHelper = RecentsHelper(context)
+    private var callLogObserver: ContentObserver? = null
+    private val refreshHandler = Handler(Looper.getMainLooper())
+    private val refreshRunnable = Runnable {
+        refreshCallLogActual()
+    }
 
     override fun onFinishInflate() {
         val startTime = System.currentTimeMillis()
@@ -53,6 +61,52 @@ class RecentsFragment(
         binding = FragmentRecentsBinding.bind(this)
         innerBinding = RecentsInnerBinding(binding)
         Log.d("StartupPerf", "RecentsFragment onFinishInflate completed in ${System.currentTimeMillis() - startTime}ms")
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        registerCallLogObserver()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        unregisterCallLogObserver()
+        refreshHandler.removeCallbacks(refreshRunnable)
+    }
+
+    private fun registerCallLogObserver() {
+        if (callLogObserver != null) return
+        if (!context.hasPermission(PERMISSION_READ_CALL_LOG)) return
+        try {
+            val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+                override fun onChange(selfChange: Boolean) {
+                    super.onChange(selfChange)
+                    Log.d(TAG, "Call log DB changed, refreshing...")
+                    refreshCallLog()
+                }
+            }
+            context.contentResolver.registerContentObserver(
+                android.provider.CallLog.Calls.CONTENT_URI,
+                true,
+                observer
+            )
+            callLogObserver = observer
+            Log.d(TAG, "CallLog observer registered successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to register CallLog observer", e)
+        }
+    }
+
+    private fun unregisterCallLogObserver() {
+        callLogObserver?.let {
+            try {
+                context.contentResolver.unregisterContentObserver(it)
+                Log.d(TAG, "CallLog observer unregistered")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to unregister CallLog observer", e)
+            }
+            callLogObserver = null
+        }
     }
 
     override fun setupFragment() {
@@ -229,6 +283,12 @@ class RecentsFragment(
     }
 
     private fun refreshCallLog() {
+        registerCallLogObserver()
+        refreshHandler.removeCallbacks(refreshRunnable)
+        refreshHandler.postDelayed(refreshRunnable, 300L)
+    }
+
+    private fun refreshCallLogActual() {
         Log.d(TAG, "[REFRESH_START] Refresh call log started at ${System.currentTimeMillis()}")
         getRecentCalls {
             Log.d(TAG, "[REFRESH_CALLBACK] Callback received with ${it.size} items at ${System.currentTimeMillis()}")

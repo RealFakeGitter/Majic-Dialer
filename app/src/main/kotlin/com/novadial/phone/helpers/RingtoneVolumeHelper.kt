@@ -44,6 +44,10 @@ object RingtoneVolumeHelper {
         val config = context.config
         val audioManager = context.audioManager
 
+        // Only boost in NORMAL (General) ringer mode.
+        // In VIBRATE or SILENT mode, do nothing — preserve Android's native behavior.
+        if (audioManager.ringerMode != AudioManager.RINGER_MODE_NORMAL) return
+
         if (!config.isRingtoneVolumeBoosted) {
             val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_RING)
             val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_RING)
