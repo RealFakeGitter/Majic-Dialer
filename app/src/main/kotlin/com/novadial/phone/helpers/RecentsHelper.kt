@@ -391,18 +391,9 @@ class RecentsHelper(private val context: Context) {
             accountIdToSimAccountMap[it.handle.id] = it
         }
 
-        // Build selection to filter by previous recents if provided
-        val (selection, selectionParams) = if (previousRecents.isNotEmpty()) {
-            val previousRecentCalls = previousRecents
-                .flatMap { it.groupedCalls ?: listOf(it) }
-                .map { it.copy(groupedCalls = null) }
-            Pair(
-                "${Calls.DATE} >= ?",
-                arrayOf("${previousRecentCalls.minOf { it.startTS }}")
-            )
-        } else {
-            Pair(null, null)
-        }
+        val selection: String? = null
+        val selectionParams: Array<String>? = null
+
 
         val projection = arrayOf(
             Calls._ID, Calls.NUMBER, Calls.CACHED_NAME, Calls.CACHED_PHOTO_URI,
@@ -701,7 +692,10 @@ class RecentsHelper(private val context: Context) {
             accountIdToSimAccountMap[it.handle.id] = it
         }
 
-        val cursor = if (isNougatPlus()) {
+        val cursor = if (queryLimit == Int.MAX_VALUE) {
+            val sortOrder = "${Calls.DATE} DESC"
+            context.contentResolver.query(contentUri, projection, selection, selectionParams, sortOrder)
+        } else if (isNougatPlus()) {
             // https://issuetracker.google.com/issues/175198972?pli=1#comment6
             val limitedUri = contentUri.buildUpon()
                 .appendQueryParameter(Calls.LIMIT_PARAM_KEY, queryLimit.toString())
@@ -884,6 +878,110 @@ class RecentsHelper(private val context: Context) {
                 }
             }
         }
+    }
+
+    fun belongToSameGroup(callA: RecentCall, callB: RecentCall): Boolean {
+        val normA = callA.phoneNumber.normalizePhoneNumber() ?: ""
+        val normB = callB.phoneNumber.normalizePhoneNumber() ?: ""
+        val keyA = if (normA.length >= COMPARABLE_PHONE_NUMBER_LENGTH) normA.takeLast(COMPARABLE_PHONE_NUMBER_LENGTH) else normA.ifBlank { callA.phoneNumber }
+        val keyB = if (normB.length >= COMPARABLE_PHONE_NUMBER_LENGTH) normB.takeLast(COMPARABLE_PHONE_NUMBER_LENGTH) else normB.ifBlank { callB.phoneNumber }
+        return keyA == keyB
+    }
+
+    fun getLatestCallLogEntry(contacts: List<Contact>): RecentCall? {
+        if (!context.hasPermission(PERMISSION_READ_CALL_LOG)) {
+            return null
+        }
+        val accountIdToSimAccountMap = HashMap<String, SIMAccount>()
+        context.getAvailableSIMCardLabels().forEach {
+            accountIdToSimAccountMap[it.handle.id] = it
+        }
+        val projection = arrayOf(
+            Calls._ID, Calls.NUMBER, Calls.CACHED_NAME, Calls.CACHED_PHOTO_URI,
+            Calls.DATE, Calls.DURATION, Calls.TYPE, Calls.PHONE_ACCOUNT_ID, Calls.NUMBER_PRESENTATION
+        )
+        val cursor = context.contentResolver.query(
+            contentUri, projection, null, null, "${Calls.DATE} DESC LIMIT 1"
+        )
+        cursor?.use {
+            if (it.moveToFirst()) {
+                val idIndex = it.getColumnIndex(Calls._ID)
+                val numberIndex = it.getColumnIndex(Calls.NUMBER)
+                val presentationIndex = it.getColumnIndex(Calls.NUMBER_PRESENTATION)
+                val nameIndex = it.getColumnIndex(Calls.CACHED_NAME)
+                val photoIndex = it.getColumnIndex(Calls.CACHED_PHOTO_URI)
+                val dateIndex = it.getColumnIndex(Calls.DATE)
+                val durationIndex = it.getColumnIndex(Calls.DURATION)
+                val typeIndex = it.getColumnIndex(Calls.TYPE)
+                val accountIdIndex = it.getColumnIndex(Calls.PHONE_ACCOUNT_ID)
+
+                val id = if (idIndex != -1) it.getInt(idIndex) else 0
+                val number = if (numberIndex != -1) it.getString(numberIndex) else null
+                val presentation = if (presentationIndex != -1 && !it.isNull(presentationIndex)) it.getInt(presentationIndex) else Calls.PRESENTATION_ALLOWED
+                val presentationBlocked = presentation == PRESENTATION_UNKNOWN
+                        || presentation == PRESENTATION_UNAVAILABLE
+                        || presentation == Calls.PRESENTATION_RESTRICTED
+
+                val isUnknownNumber = presentationBlocked || number.isNullOrBlank() || number == "-1"
+
+                val blockedNumbers = context.getBlockedNumbers()
+                if (context.isNumberBlocked(number ?: "", blockedNumbers)) {
+                    return null
+                }
+
+                // Resolve contact name and photo
+                var name = if (nameIndex != -1) it.getString(nameIndex)?.takeIf { n -> n.isNotEmpty() && n != "-1" } else null
+                val normalizedNumber = number?.normalizePhoneNumber() ?: ""
+
+                if (name == null && !isUnknownNumber && !number.isNullOrBlank()) {
+                    val matchingContact = contacts.firstOrNull { c -> c.doesHavePhoneNumber(number) }
+                    name = matchingContact?.getNameToDisplay()
+                }
+                if (name.isNullOrBlank() || name == "-1") {
+                    name = if (isUnknownNumber) context.getString(R.string.unknown) else number.orEmpty()
+                }
+
+                var photoUri = if (photoIndex != -1) it.getString(photoIndex)?.takeIf { p -> p.isNotEmpty() } ?: "" else ""
+                if (photoUri.isEmpty() && !number.isNullOrEmpty()) {
+                    val matchingContact = contacts.firstOrNull { c -> c.doesHavePhoneNumber(number) }
+                    photoUri = matchingContact?.photoUri ?: ""
+                }
+
+                val startTS = if (dateIndex != -1) it.getLong(dateIndex) else 0L
+                val duration = if (durationIndex != -1) it.getInt(durationIndex) else 0
+                val type = if (typeIndex != -1) it.getInt(typeIndex) else 0
+                val accountId = if (accountIdIndex != -1) it.getString(accountIdIndex) ?: "" else ""
+                val simAccount = accountIdToSimAccountMap[accountId]
+
+                var specificNumber = ""
+                var specificType = ""
+                // For contacts with multiple numbers, check if matchingContact has multiple numbers
+                val matchingContact = contacts.firstOrNull { c -> c.doesHavePhoneNumber(number.orEmpty()) }
+                if (matchingContact != null && matchingContact.phoneNumbers.size > 1) {
+                    val specificPhoneNumber = matchingContact.phoneNumbers.firstOrNull { pn -> pn.value == number }
+                    if (specificPhoneNumber != null) {
+                        specificNumber = specificPhoneNumber.value
+                        specificType = context.getPhoneNumberTypeText(specificPhoneNumber.type, specificPhoneNumber.label)
+                    }
+                }
+
+                return RecentCall(
+                    id = id,
+                    phoneNumber = number.orEmpty(),
+                    name = name,
+                    photoUri = photoUri,
+                    startTS = startTS,
+                    duration = duration,
+                    type = type,
+                    simID = simAccount?.id ?: -1,
+                    simColor = simAccount?.color ?: -1,
+                    specificNumber = specificNumber,
+                    specificType = specificType,
+                    isUnknownNumber = isUnknownNumber
+                )
+            }
+        }
+        return null
     }
 
     private fun groupCallsByDate(recentCalls: List<RecentCall>): List<CallLogItem> {

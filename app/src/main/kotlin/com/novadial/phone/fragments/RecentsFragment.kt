@@ -49,7 +49,6 @@ class RecentsFragment(
 
     private var searchQuery: String? = null
     private var recentsHelper = RecentsHelper(context)
-    private var callLogObserver: ContentObserver? = null
     private val refreshHandler = Handler(Looper.getMainLooper())
     private val refreshRunnable = Runnable {
         refreshCallLogActual()
@@ -63,50 +62,9 @@ class RecentsFragment(
         Log.d("StartupPerf", "RecentsFragment onFinishInflate completed in ${System.currentTimeMillis() - startTime}ms")
     }
 
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-        registerCallLogObserver()
-    }
-
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        unregisterCallLogObserver()
         refreshHandler.removeCallbacks(refreshRunnable)
-    }
-
-    private fun registerCallLogObserver() {
-        if (callLogObserver != null) return
-        if (!context.hasPermission(PERMISSION_READ_CALL_LOG)) return
-        try {
-            val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
-                override fun onChange(selfChange: Boolean) {
-                    super.onChange(selfChange)
-                    Log.d(TAG, "Call log DB changed, refreshing...")
-                    refreshCallLog()
-                }
-            }
-            context.contentResolver.registerContentObserver(
-                android.provider.CallLog.Calls.CONTENT_URI,
-                true,
-                observer
-            )
-            callLogObserver = observer
-            Log.d(TAG, "CallLog observer registered successfully")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to register CallLog observer", e)
-        }
-    }
-
-    private fun unregisterCallLogObserver() {
-        callLogObserver?.let {
-            try {
-                context.contentResolver.unregisterContentObserver(it)
-                Log.d(TAG, "CallLog observer unregistered")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to unregister CallLog observer", e)
-            }
-            callLogObserver = null
-        }
     }
 
     override fun setupFragment() {
@@ -283,9 +241,8 @@ class RecentsFragment(
     }
 
     private fun refreshCallLog() {
-        registerCallLogObserver()
         refreshHandler.removeCallbacks(refreshRunnable)
-        refreshHandler.postDelayed(refreshRunnable, 300L)
+        refreshHandler.postDelayed(refreshRunnable, 50L)
     }
 
     private fun refreshCallLogActual() {
@@ -308,6 +265,68 @@ class RecentsFragment(
         // RecentsHelper now handles all data processing including name resolution and grouping by date
         recentsHelper.getGroupedRecentCalls(existingRecentCalls, RecentsHelper.QUERY_LIMIT) {
             callback(it)
+        }
+    }
+
+    fun addNewCallLogEntry(newCall: RecentCall) {
+        Log.d(TAG, "addNewCallLogEntry called with: id=${newCall.id}, number=${newCall.phoneNumber}")
+        
+        activity?.runOnUiThread {
+            // Check for duplicates
+            val isDuplicate = allRecentCalls.filterIsInstance<RecentCall>().any {
+                it.id == newCall.id || it.groupedCalls?.any { gc -> gc.id == newCall.id } == true
+            }
+            if (isDuplicate) {
+                Log.d(TAG, "Call log entry already exists in the list, skipping")
+                return@runOnUiThread
+            }
+
+            val currentRecentCalls = allRecentCalls.filterIsInstance<RecentCall>().toMutableList()
+            
+            // Check if there is an existing group for this phone number/contact
+            val existingGroupIndex = currentRecentCalls.indexOfFirst {
+                recentsHelper.belongToSameGroup(it, newCall)
+            }
+
+            if (existingGroupIndex != -1) {
+                val existingGroup = currentRecentCalls[existingGroupIndex]
+                val updatedGroupedCalls = existingGroup.groupedCalls?.toMutableList() ?: mutableListOf(existingGroup)
+                updatedGroupedCalls.add(0, newCall)
+                val updatedParent = newCall.copy(groupedCalls = updatedGroupedCalls)
+                
+                currentRecentCalls.removeAt(existingGroupIndex)
+                currentRecentCalls.add(0, updatedParent)
+            } else {
+                currentRecentCalls.add(0, newCall)
+            }
+
+            // Sort by startTS descending
+            currentRecentCalls.sortByDescending { it.startTS }
+
+            // Group by date
+            val callLog = mutableListOf<CallLogItem>()
+            var lastDayCode = ""
+            for (call in currentRecentCalls) {
+                val currentDayCode = call.dayCode
+                if (currentDayCode != lastDayCode) {
+                    callLog += CallLogItem.Date(timestamp = call.startTS, dayCode = currentDayCode)
+                    lastDayCode = currentDayCode
+                }
+                callLog += call
+            }
+
+            allRecentCalls = callLog
+            
+            showOrHidePlaceholder(false)
+            binding.progressIndicator.hide()
+            binding.recentsList.beVisible()
+
+            if (binding.recentsList.adapter == null) {
+                gotRecents(callLog)
+            } else {
+                recentsAdapter?.updateItems(callLog)
+            }
+            Log.d(TAG, "Successfully updated UI with the new call log entry")
         }
     }
 

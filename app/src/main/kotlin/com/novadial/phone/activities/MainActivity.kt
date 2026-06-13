@@ -48,6 +48,7 @@ import com.novadial.phone.helpers.OPEN_DIAL_PAD_AT_LAUNCH
 import com.novadial.phone.helpers.ContactsCache
 import com.novadial.phone.helpers.RecentsHelper
 import com.novadial.phone.helpers.tabsList
+import com.novadial.phone.helpers.CallLogWatcher
 import com.novadial.phone.models.Events
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
@@ -78,6 +79,7 @@ class MainActivity : SimpleActivity() {
         refreshMenuItems()
         setupEdgeToEdge(padBottomImeAndSystem = listOf(binding.mainTabsHolder))
 
+        CallLogWatcher.ensureRegistered(this)
         EventBus.getDefault().register(this)
         launchedDialer = savedInstanceState?.getBoolean(OPEN_DIAL_PAD_AT_LAUNCH) ?: false
 
@@ -661,6 +663,11 @@ class MainActivity : SimpleActivity() {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun refreshCallLog(event: Events.RefreshCallLog) {
-        getRecentsFragment()?.refreshItems()
+        getRecentsFragment()?.refreshItems(invalidate = false)
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onNewCallLogAdded(event: Events.NewCallLogAdded) {
+        getRecentsFragment()?.addNewCallLogEntry(event.newCall)
     }
 }

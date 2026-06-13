@@ -17,9 +17,16 @@ import com.novadial.phone.helpers.NoCall
 import com.novadial.phone.helpers.RingtoneVolumeHelper
 import com.novadial.phone.models.Events
 import org.greenrobot.eventbus.EventBus
+import com.novadial.phone.helpers.CallLogWatcher
+import com.novadial.phone.helpers.RecentsHelper
 
 class CallService : InCallService() {
     private val callNotificationManager by lazy { CallNotificationManager(this) }
+
+    override fun onCreate() {
+        super.onCreate()
+        CallLogWatcher.ensureRegistered(this)
+    }
 
     private val callListener = object : Call.Callback() {
         override fun onStateChanged(call: Call, state: Int) {
@@ -84,7 +91,7 @@ class CallService : InCallService() {
             }
         }
 
-        EventBus.getDefault().post(Events.RefreshCallLog)
+        CallLogWatcher.ensureRegistered(this)
     }
 
     override fun onCallAudioStateChanged(audioState: CallAudioState?) {
