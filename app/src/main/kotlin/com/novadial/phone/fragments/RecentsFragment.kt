@@ -285,7 +285,7 @@ class RecentsFragment(
     private fun refreshCallLog() {
         registerCallLogObserver()
         refreshHandler.removeCallbacks(refreshRunnable)
-        refreshHandler.postDelayed(refreshRunnable, 300L)
+        refreshHandler.postDelayed(refreshRunnable, 50L)
     }
 
     private fun refreshCallLogActual() {

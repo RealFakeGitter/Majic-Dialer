@@ -391,18 +391,9 @@ class RecentsHelper(private val context: Context) {
             accountIdToSimAccountMap[it.handle.id] = it
         }
 
-        // Build selection to filter by previous recents if provided
-        val (selection, selectionParams) = if (previousRecents.isNotEmpty()) {
-            val previousRecentCalls = previousRecents
-                .flatMap { it.groupedCalls ?: listOf(it) }
-                .map { it.copy(groupedCalls = null) }
-            Pair(
-                "${Calls.DATE} >= ?",
-                arrayOf("${previousRecentCalls.minOf { it.startTS }}")
-            )
-        } else {
-            Pair(null, null)
-        }
+        val selection: String? = null
+        val selectionParams: Array<String>? = null
+
 
         val projection = arrayOf(
             Calls._ID, Calls.NUMBER, Calls.CACHED_NAME, Calls.CACHED_PHOTO_URI,
@@ -701,7 +692,10 @@ class RecentsHelper(private val context: Context) {
             accountIdToSimAccountMap[it.handle.id] = it
         }
 
-        val cursor = if (isNougatPlus()) {
+        val cursor = if (queryLimit == Int.MAX_VALUE) {
+            val sortOrder = "${Calls.DATE} DESC"
+            context.contentResolver.query(contentUri, projection, selection, selectionParams, sortOrder)
+        } else if (isNougatPlus()) {
             // https://issuetracker.google.com/issues/175198972?pli=1#comment6
             val limitedUri = contentUri.buildUpon()
                 .appendQueryParameter(Calls.LIMIT_PARAM_KEY, queryLimit.toString())
