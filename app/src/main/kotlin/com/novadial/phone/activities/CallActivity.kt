@@ -691,6 +691,8 @@ class CallActivity : SimpleActivity() {
         } else if (phoneState is TwoCalls) {
             updateCallState(phoneState.active)
             updateCallOnHoldState(phoneState.onHold)
+        } else if (phoneState is NoCall) {
+            endCall()
         }
 
         updateCallAudioState(CallManager.getCallAudioRoute())
