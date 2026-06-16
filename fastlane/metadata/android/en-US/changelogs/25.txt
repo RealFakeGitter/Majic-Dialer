@@ -1,0 +1,5 @@
+• Added persistent in-call notifications.
+• Active call notifications can no longer be accidentally dismissed.
+• Added quick Speaker toggle directly from the notification.
+• Added quick Mute toggle directly from the notification.
+• Outgoing answered calls now remain clearly identified.

@@ -1,0 +1,3 @@
+• Updated application icon and brand logo
+• Removed legacy setups and popups
+• UI refinements and stability improvements

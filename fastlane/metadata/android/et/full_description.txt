@@ -1,23 +1,43 @@
-tee kõik vajalikuid kõned ja kaitse oma privaatseid andmeid. Fossify Telefon määratleb mobiilirakenduste kasutamise kogemuse uuesti, pakkudes võrratut privaatsust ja tõhusust. Ilma reklaamide ja rakendusele mittevajalike õigusteta, see on loodud sujuvaks ja turvaliseks igapäevaseks suhtlemiseks.
+📞 TARKAM HELISTAMINE, SELGUSE TAGAMISEKS
 
-📱 SINU PRIVAATSUS, MEIE PRIORITEET:  
-Tere tulemast rakendusse Fossify Telefon, kus sinu digitaalne privaatsus on esmatähtis. Kasuta nutilahednust, mis austab sinu andmeid, tagades, et sinu isikuandmed jäävad turvaliseks ja privaatseks.
+NovaDial on privaatsusele keskendunud telefonirakendus, mis on loodud kasutajatele, kes soovivad puhast, usaldusväärset ja tõhusat helistamiskogemust. Fossify Phone'il põhinev ja sõltumatu kahvlina välja töötatud NovaDial tutvustab olulisi täiustusi kõnede haldamises, kasutatavuses ja jõudluses, jäädes samas täiesti tasuta ja avatud lähtekoodiga.
 
-🚀 SUJUV TOIMIMINE:
-Fossify Telefon kasutab sujuvat ja tundlikku mobiililiidest, mis parandab sinu telefoni jõudlust, kaitstes samal ajal sinu privaatsust. Meie sujuva kasutajakogemusega rakendus on optimeeritud tõhususe ja kiiruse jaoks.
+🔒 PRIVAATSUS ESIMESE
 
-🌐 AVATUD LÄHTEKOODI KINDEL TAUST:  
-Fossify Telefon on kontrollitav. Meie rakendus on põhineb avatud lähtekoodil, mis võimaldab sul vaadata meie koodi GitHubis, edendades usaldust ja kogukonda, mis on pühendunud privaatsusele.
+Teie telefonirakendus peaks teie heaks töötama, mitte teid jälgima. NovaDial ei sisalda reklaame, jälgijaid, oste ega tarbetut andmete kogumist. Teie kõneajalugu, kontaktid ja suhtlus jäävad teie kontrolli alla.
 
-🖼️ KOHANDATUD VÄLIMUS:  
-Kohandage oma mobiilikogemust rakenduse Fossify Telefon abil. Säti oma rakenduse seadeid isikupärastatud kasutajaliidese jaoks, alates temaatilisest kujundusest kuni funktsionaalsete eelistusteni. Naudi selget ja intuitiivset kasutajaliidest.
+📋 REIMGINEED KÕNEAJALUGU
 
-🔋 TÕHUS RESSURSIHALDUS:  
-Fossify Telefon on loodud optimaalseks ressursikasutuseks, mis aitab kaasa aku pikemale kestvusele. See kasutab telefoni ressursse vähe, tagades, et sinu seade töötab tõhusalt ja aku tühjeneb võimalikult vähe.
+NovaDial tutvustab ümberkujundatud kõneajaloo süsteemi, mis keskendub kiirusele ja kasutatavusele.
 
-Laadi rakendus Fossify Telefon alla ja tegutse mobiilses maailmas, kus privaatsus sulandub sujuvalt funktsionaalsusega. Sinu teekond turvalisema ja isikupärastatud mobiilikogemuse suunas algab siit.
+Traditsioonilised kõnelogid võivad aja jooksul muutuda segaseks, kuvades samadelt kontaktidelt tuhandeid korduvaid kirjeid. NovaDial kasutab teistsugust lähenemist, korraldades hiljutised kõned kordumatute helistajate ümber, selle asemel et laadida iga ajalooline kõnekirje korraga.
 
-Tutvu Fossify rakendustega: https://www.fossify.org
-Avatud lähtekood: https://www.github.com/FossifyOrg
-Liitu kogukonnaga Reddit'is: https://www.reddit.com/r/Fossify
-Suhtle Telegram'is: https://t.me/Fossify
+Hüvede hulka kuuluvad:
+
+• Kiirem käivitamine ja sujuvam navigeerimine
+• Puhtam viimaste kõnede liides
+• Vähenenud segadus korduvatest kõnede sisestamisest
+• Spetsiaalne kõne üksikasjade leht iga kontakti jaoks
+• Vajadusel saadaval täielik kõneajalugu
+
+Selle asemel, et kuvada viimaste kõnede põhivaates sadu korduvaid kirjeid samalt helistajalt, näitab NovaDial lühikest ülevaadet teie suhtlusajaloost. Üksikasjalikud kõnekirjed jäävad juurdepääsetavaks spetsiaalse kõne üksikasjade ekraani kaudu.
+
+🎨 MODERNNE JA KASUTAJASÕBRALIK DISAIN
+
+NovaDial tutvustab kasutajaliidese täiustusi, mis on keskendunud kasutatavusele ja selgusele. Liides on loodud tunduma tuttavana, pakkudes samal ajal sujuvamat kogemust igapäevaseks telefoni kasutamiseks.
+
+⚡ KIIRE JA KERGE
+
+Tõhusaks ja tundlikuks loodud NovaDial minimeerib tarbetut andmetöötlust helistaja ja viimaste kõnede ekraanidel, aidates säilitada sujuvat kasutuskogemust isegi suure kõneajalooga kasutajatel.
+
+🌍 TÄIELIKULT AVATUD ALLIKAS
+
+NovaDial on avatud lähtekoodiga tarkvara. Igaüks saab vaadata lähtekoodi, anda oma panuse parendustesse või aidata kujundada projekti tulevikku.
+
+❤️ KOGUKONNALÕITUD ARENG
+
+NovaDial on Fossify Phone'i sõltumatu kahvel, mis on loodud kõnekogemuse parandamiseks sihipärase arenduse ja kasutajapõhiste täiustuste kaudu.
+
+Laadige alla NovaDial ja nautige puhtamat, kiiremat ja privaatsust austavamat telefonikogemust.
+
+Avatud lähtekoodiga kood: https://www.github.com/dhilipmpms/NovaDial

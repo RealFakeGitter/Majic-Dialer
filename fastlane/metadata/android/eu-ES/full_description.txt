@@ -1,23 +1,43 @@
-Ahaldundu zure deiak, babestu zure datuak. Fossify telefonoak mugikorreko aplikazioen esperientzia berriro definitzen du pribatutasun eta eraginkortasun paregabearekin. Iragarkirik eta baimen intrusiborik gabe, eguneroko komunikazio seguru eta segururako diseinatuta dago.
+📞 DEI ADIMENSUAGOA, ARGITASUNERAKO DISEINUA
 
-📱 ZURE PRIBATUTASUNA, GURE LEHENTASUNA:  
-Ongi etorri Fossify telefono aplikaziora, non zure pribatutasun digitala funtsezkoa den. Aldatu zure datuak errespetatzen dituen mugikorrerako esperientziara, zure informazio pertsonala segurua eta pribatua dela ziurtatuz.
+NovaDial pribatutasunean oinarritutako telefono-aplikazio bat da, dei-esperientzia garbi, fidagarria eta eraginkorra nahi duten erabiltzaileentzat eraikia. Fossify Telefonoan oinarrituta eta bidegurutze independente gisa garatua, NovaDial-ek hobekuntza nabarmenak sartzen ditu deien kudeaketan, erabilgarritasunean eta errendimenduan, guztiz doakoa eta kode irekia izaten jarraitzen duen bitartean.
 
-🚀 ARRAKALARIK GABEKO ERRENDIMENDUA:
-Fossify telefono aplikazioak mugikorretarako interfaze fluidoa eta sentikorra eskaintzen du, zure telefonoaren errendimendua hobetuz zure pribatutasuna babesten duen bitartean. Bizi itzazu atzerapenik gabeko erabiltzailearen esperientzia leuna, eraginkortasunerako eta abiadurarako optimizatuta.
+🔒 PRIBATUTASUNA LEHENENGO
 
-🌐 ITURRI IREKIKO BERMEA:  
-Fossify telefonoa aplikazioarekin, gardentasuna zure esku dago. Kode irekiko oinarri batean eraikita, gure aplikazioak GitHub-en gure kodea berrikusteko aukera ematen dizu, konfiantza eta pribatutasunarekin konprometitutako komunitate bat sustatuz.
+Zure telefono-aplikazioak zuretzat funtzionatu beharko luke, ez zure jarraipena. NovaDial-ek ez du iragarkirik, ez jarraitzailerik, ez erosketarik eta ez alferrikako datu-bilketarik. Zure deien historia, kontaktuak eta komunikazioa zure kontrolpean jarraitzen dute.
 
-🖼️ NEURRIRAKO PERTSONALIZAZIOA:  
-Pertsonalizatu zure mugikorraren esperientzia Fossify telefonoa aplikazioarekin. Doitu zure aplikazioaren ezarpenak interfaze pertsonalizatu baterako, diseinu tematikoetatik hasi eta hobespen funtzionaletaraino. Gozatu intuitiboa eta bakarra den erabiltzailearen interfazeaz.
+📋 DEIALDIAREN HISTORIA BIRIMAGINATUA
 
-🔋 BALIABIDEEN KUDEAKETA ERAGINKORRA:  
-Fossify telefonoaren aplikazioa baliabideen erabilera optimorako diseinatuta dago, bateriaren iraupena luzatzen laguntzen baitu. Zure telefonoaren baliabideak argi ditu, zure gailua modu eraginkorrean funtzionatzen duela ziurtatzen du bateria gutxitu gabe.
+NovaDial-ek deien historia sistema birdiseinatu bat aurkezten du abiaduran eta erabilgarritasunean oinarrituta.
 
-Deskargatu Fossify telefonoa aplikazioa orain eta sartu pribatutasuna funtzionalitateekin ezin hobeto uztartzen den mundu mugikor batean. Zure mugikorren esperientzia pertsonalizatu eta seguruago baterako bidaia hemen hasten da.
+Dei-erregistro tradizionalak denborarekin nahastuta egon daitezke, kontaktu bereko milaka sarrera bikoiztuak bistaratuz. NovaDial-ek beste ikuspegi bat hartzen du azken deiak deitzaile bakarren inguruan antolatuz, dei-erregistro historiko guztiak aldi berean kargatu beharrean.
 
-Arakatu Fossify aplikazio gehiago: https://www.fossify.org
-Iturburu irekiko kodea: https://www.github.com/FossifyOrg
-Sartu komunitatean Reddit-en: https://www.reddit.com/r/Fossify
-Konektatu Telegram-en: https://t.me/Fossify
+Abantailen artean daude:
+
+• Abiarazi azkarragoa eta nabigazio leunagoa
+• Azken deien interfaze garbiagoa
+• Deialdi errepikatuen sarreren nahasmena murriztu da
+• Deiaren xehetasunen orria kontaktu bakoitzarentzat
+• Deien historia osoa eskuragarri behar denean
+
+Azken deien ikuspegi nagusian deitzaile beraren ehunka sarrera errepikatu ordez, NovaDial-ek zure komunikazio-historiaren ikuspegi orokorra erakusten du. Dei-erregistro zehatzak eskuragarri geratzen dira deiaren xehetasunen pantaila dedikatuaren bidez.
+
+🎨 DISEINU MODERNOA ETA ERABILTZAILEA
+
+NovaDial-ek erabilgarritasunari eta argitasunari ardaztutako interfazearen hobekuntzak aurkezten ditu. Interfazea ezaguna sentitzeko diseinatuta dago telefonoaren eguneroko erabilerarako esperientzia errazagoa eskaintzen duen bitartean.
+
+⚡ AZKARRA ETA ARINA
+
+Eraginkorra eta sentikorra izateko eraikia, NovaDial-ek markatzailean eta azken deien pantailetan alferrikako datuen prozesamendua murrizten du, dei-historia handiak dituzten erabiltzaileei ere esperientzia leuna mantentzen laguntzen die.
+
+🌍 ITURRI GUZTIZ IREKIA
+
+NovaDial kode irekiko softwarea da. Edonork ikus dezake iturburu-kodea, hobekuntzak lagundu edo proiektuaren etorkizuna moldatzen lagundu.
+
+❤️ KOMUNITATEAK BURUZKO GARAPENA
+
+NovaDial Fossify Telefonoaren fork independente bat da, dei-esperientzia hobetzeko sortua garapen bideratuaren eta erabiltzaileek gidatutako hobekuntzen bidez.
+
+Deskargatu NovaDial eta gozatu telefono-esperientzia garbiagoa, azkarragoa eta pribatutasuna errespetatzen duena.
+
+Iturburu irekiko kodea: https://www.github.com/dhlipmpms/NovaDial

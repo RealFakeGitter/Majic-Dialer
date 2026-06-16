@@ -1,23 +1,43 @@
-Osnažite svoje pozive, zaštitite svoje podatke. Fossify Phone redefinira iskustvo mobilne aplikacije s neusporedivom privatnošću i učinkovitošću. Bez oglasa i nametljivih dopuštenja, dizajniran je za besprijekornu i sigurnu svakodnevnu komunikaciju.
+📞 PAMETNIJI POZIVI, DIZAJNIRAN ZA JASNOĆU
 
-📱 VAŠA PRIVATNOST, NAŠ PRIORITET:
-Dobrodošli u Fossify Phone aplikaciju, gdje je vaša digitalna privatnost najvažnija. Prebacite se na mobilno iskustvo koje poštuje vaše podatke, osiguravajući da vaši osobni podaci ostanu sigurni i privatni.
+NovaDial je telefonska aplikacija usmjerena na privatnost napravljena za korisnike koji žele čisto, pouzdano i učinkovito iskustvo pozivanja. Temeljen na Fossify Phoneu i razvijen kao neovisni fork, NovaDial uvodi značajna poboljšanja u upravljanju pozivima, upotrebljivosti i performansama dok ostaje potpuno besplatan i otvorenog koda.
 
-🚀 BESPRIJEKORNE PERFORMANSE:
-Fossify Phone aplikacija nudi fluidno i responzivno mobilno sučelje, poboljšavajući performanse vašeg telefona uz zaštitu vaše privatnosti. Doživite korisničko iskustvo bez kašnjenja i glatko, optimizirano za učinkovitost i brzinu.
+🔒 PRIVATNOST NA PRVOM MJERU
 
-🌐 JAMSTVO OTVORENOG KODA:
-S Fossify Phone aplikacijom, transparentnost vam je na dohvat ruke. Izgrađena na temelju otvorenog koda, naša aplikacija vam omogućuje pregled našeg koda na GitHubu, potičući povjerenje i zajednicu posvećenu privatnosti.
+Vaša telefonska aplikacija trebala bi raditi za vas, a ne pratiti vas. NovaDial ne sadrži oglase, nema tragače, nema kupnje niti nepotrebno prikupljanje podataka. Vaša povijest poziva, kontakti i komunikacija ostaju pod vašom kontrolom.
 
-🖼️ PRILAGOĐAVANJE PO MJERI:
-Prilagodite svoje mobilno iskustvo uz Fossify Phone aplikaciju. Prilagodite postavke aplikacije za personalizirano sučelje, od tematskih dizajna do funkcionalnih preferencija. Uživajte u korisničkom sučelju koje je intuitivno i jedinstveno vaše.
+📋 IZMIŠLJENA POVIJEST POZIVA
 
-🔋 UČINKOVITO UPRAVLJANJE RESURSIMA:
-Fossify Phone aplikacija dizajnirana je za optimalno korištenje resursa, što doprinosi duljem vijeku trajanja baterije. Štedi resurse vašeg telefona, osiguravajući da vaš uređaj radi učinkovito uz minimalno pražnjenje baterije.
+NovaDial predstavlja redizajnirani sustav povijesti poziva usmjeren na brzinu i upotrebljivost.
 
-Preuzmite Fossify Phone aplikaciju sada i zakoračite u mobilni svijet gdje se privatnost besprijekorno stapa s funkcionalnošću. Vaše putovanje prema sigurnijem, personaliziranom mobilnom iskustvu počinje ovdje.
+Tradicionalni zapisnici poziva s vremenom mogu postati pretrpani, prikazujući tisuće dvostrukih unosa istih kontakata. NovaDial ima drugačiji pristup organiziranjem nedavnih poziva oko jedinstvenih pozivatelja umjesto učitavanja svakog povijesnog zapisa poziva odjednom.
 
-Istražite više Fossify aplikacija: https://www.fossify.org
-Otvoreni kod: https://www.github.com/FossifyOrg
-Pridružite se zajednici na Redditu: https://www.reddit.com/r/Fossify
-Povežite se na Telegramu: https://t.me/Fossify
+Pogodnosti uključuju:
+
+• Brže pokretanje i glatkija navigacija
+• Čišće sučelje nedavnih poziva
+• Smanjeni nered od ponovljenih unosa poziva
+• Namjenska stranica s detaljima poziva za svaki kontakt
+• Potpuna povijest poziva dostupna kada je potrebna
+
+Umjesto prikazivanja stotina ponovljenih unosa od istog pozivatelja u glavnom prikazu nedavnih poziva, NovaDial prikazuje sažeti pregled vaše povijesti komunikacije. Detaljni zapisi poziva ostaju dostupni putem namjenskog zaslona s detaljima poziva.
+
+🎨 MODERAN I JEDNOSTAVAN DIZAJN
+
+NovaDial uvodi poboljšanja korisničkog sučelja usmjerena na upotrebljivost i jasnoću. Sučelje je osmišljeno tako da se čini poznatim, a istovremeno pruža jednostavnije iskustvo za svakodnevnu upotrebu telefona.
+
+⚡ BRZ I LAGAAN
+
+Napravljen da bude učinkovit i brz, NovaDial smanjuje nepotrebnu obradu podataka u biraču i zaslonima nedavnih poziva, pomažući u održavanju glatkog iskustva čak i za korisnike s velikom poviješću poziva.
+
+🌍 POTPUNO OTVORENI IZVOR
+
+NovaDial je softver otvorenog koda. Svatko može pregledati izvorni kod, doprinijeti poboljšanjima ili pomoći u oblikovanju budućnosti projekta.
+
+❤️ RAZVOJ POKRETEN ZAJEDNICOM
+
+NovaDial je neovisni fork Fossify Phonea, stvoren za poboljšanje iskustva pozivanja kroz fokusirani razvoj i poboljšanja vođena korisnicima.
+
+Preuzmite NovaDial i uživajte u čistijem, bržem telefonskom iskustvu koje više poštuje privatnost.
+
+Kod otvorenog koda: https://www.github.com/dhilipmpms/NovaDial

@@ -1,23 +1,43 @@
-Vylepšete své hovory, chraňte svá data. Telefon Fossify mění definici zážitku z mobilní aplikace s bezkonkurenční ochranou soukromí a efektivitou. Bez reklam a nebezpečných oprávnění. Je navržen pro bezproblémovou a bezpečnou každodenní komunikaci.
+📞 CHYTŘEJŠÍ VOLÁNÍ, NAVRŽENO PRO PŘEHLEDNOST
 
-📱 VAŠE SOUKROMÍ, NAŠE PRIORITA:  
-Vítejte v aplikaci Telefon Fossify, kde je vaše digitální soukromí nejdůležitější. Přepněte na mobilní aplikaci, která respektuje vaše data a zajistí, že vaše soukromé informace zůstanou opravdu soukromé a v bezpečí.
+NovaDial je telefonní aplikace zaměřená na soukromí vytvořená pro uživatele, kteří chtějí čisté, spolehlivé a efektivní volání. NovaDial, založený na Fossify Phone a vyvinutý jako nezávislá vidlice, představuje významná vylepšení správy hovorů, použitelnosti a výkonu, přičemž zůstává zcela zdarma a s otevřeným zdrojovým kódem.
 
-🚀 BEZPROBLÉMOVÁ FUNKČNOST:
-Aplikace Telefon Fossify nabízí plynulé a responzivní mobilní rozhraní, které zvyšuje výkon telefonu a zároveň chrání vaše soukromí. Zažijte plynulé uživatelské prostředí bez zpoždění, optimalizované pro efektivitu a rychlost.
+🔒 SOUKROMÍ NA prvním místě
 
-🌐 OPEN-SOURCE:  
-S aplikací Telefon Fossify máte transparentnost na dosah ruky. Naše aplikace je open-source a umožňuje vám nahlížet do našeho kódu na GitHubu, čímž podporuje důvěru a komunitu, která dbá na ochranu soukromí.
+Aplikace v telefonu by vám měla fungovat, ne vás sledovat. NovaDial neobsahuje žádné reklamy, žádné trackery, žádné nákupy a žádný zbytečný sběr dat. Vaše historie hovorů, kontakty a komunikace zůstávají pod vaší kontrolou.
 
-🖼️ NEKONEČNÉ PŘIZPŮSOBENÍ:  
-Přizpůsobte si mobilní prostředí pomocí aplikace Telefon Fossify. Upravte si nastavení aplikace pro personalizované rozhraní, od tematických návrhů až po funkční preference. Užijte si uživatelské rozhraní, které je intuitivní a jedinečně vaše.
+📋 PŘEMĚNĚNÁ HISTORIE VOLÁNÍ
 
-🔋 EFEKTIVNÍ SPRÁVA ZDROJŮ:  
-Aplikace Fossify Phone je navržena tak, aby optimálně využívala zdroje a přispívala k delší výdrži baterie. Je nenáročná na zdroje telefonu a zajišťuje efektivní provoz zařízení s minimálním vybíjením baterie.
+NovaDial představuje přepracovaný systém historie hovorů zaměřený na rychlost a použitelnost.
 
-Stáhněte si aplikaci Telefon Fossify a vstupte do mobilního světa, kde se soukromí hladce skloubí s funkčností. Vaše cesta k bezpečnějšímu a personalizovanému mobilnímu prostředí začíná zde.
+Tradiční protokoly hovorů mohou být časem nepřehledné a zobrazují tisíce duplicitních záznamů od stejných kontaktů. NovaDial má jiný přístup a organizuje nedávné hovory kolem jedinečných volajících namísto načítání všech historických záznamů hovorů najednou.
 
-Prozkoumejte další aplikace Fossify: https://www.fossify.org
-Otevřený zdrojový kód: https://www.github.com/FossifyOrg
-Připojte se ke komunitě na Redditu: https://www.reddit.com/r/Fossify
-Připojte se k Telegramu: https://t.me/Fossify
+Mezi výhody patří:
+
+• Rychlejší spuštění a plynulejší navigace
+• Čistší rozhraní posledních hovorů
+• Snížení nepořádku z opakovaných hovorů
+• Vyhrazená stránka s podrobnostmi o hovoru pro každý kontakt
+• Kompletní historie hovorů dostupná v případě potřeby
+
+Místo zobrazení stovek opakovaných záznamů od stejného volajícího v hlavním zobrazení posledních hovorů zobrazuje NovaDial stručný přehled historie vaší komunikace. Podrobné záznamy hovorů zůstávají přístupné prostřednictvím vyhrazené obrazovky podrobností o hovoru.
+
+🎨 MODERNÍ A UŽIVATELSKY PŘÍJEMNÝ DESIGN
+
+NovaDial představuje vylepšení uživatelského rozhraní zaměřené na použitelnost a přehlednost. Rozhraní je navrženo tak, aby bylo známé a zároveň poskytovalo efektivnější zážitek pro každodenní používání telefonu.
+
+⚡ RYCHLÝ A LEHKÝ
+
+NovaDial, navržený tak, aby byl efektivní a pohotový, minimalizuje zbytečné zpracování dat na obrazovce vytáčení a posledních hovorů, což pomáhá udržovat hladký zážitek i pro uživatele s velkou historií hovorů.
+
+🌍 PLNĚ OTEVŘENÝ ZDROJ
+
+NovaDial je software s otevřeným zdrojovým kódem. Kdokoli může zkontrolovat zdrojový kód, přispět k vylepšení nebo pomoci utvářet budoucnost projektu.
+
+❤️ ROZVOJ ŘÍZENÝ KOMUNITOU
+
+NovaDial je nezávislá vidlice Fossify Phone, vytvořená s cílem zlepšit zážitek z volání prostřednictvím cíleného vývoje a uživatelsky řízených vylepšení.
+
+Stáhněte si NovaDial a užijte si čistší, rychlejší a více soukromí respektující telefonování.
+
+Open-Source kód: https://www.github.com/dhilipmpms/NovaDial

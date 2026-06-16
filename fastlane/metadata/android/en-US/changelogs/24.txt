@@ -1,0 +1,3 @@
+• Fixed default dialer permission handling
+• Performance optimizations and bug fixes
+• Fixed issues affecting dialer usability on some devices
