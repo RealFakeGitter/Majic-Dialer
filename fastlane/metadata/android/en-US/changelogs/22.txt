@@ -1,9 +1,8 @@
-Changed:
+Initial NovaDial release
 
-• Updated translations
-
-Fixed:
-
-• Fixed truncated long names in call history 
-• Fixed truncated long names on call screen 
-
+• Forked from Fossify Phone
+• Optimized Recents performance
+• Faster contact loading in Recents
+• Better contact matching
+• Enhanced UI responsiveness
+• Multiple NovaDial customizations

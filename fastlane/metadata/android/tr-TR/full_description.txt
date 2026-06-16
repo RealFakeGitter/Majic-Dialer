@@ -1,23 +1,43 @@
-Aramalarınızı güçlendirin, verilerinizi koruyun. Fossify Telefon, benzersiz gizlilik ve verimlilik ile mobil uygulama deneyimini yeniden tanımlıyor. Reklamlardan ve müdahaleci izinlerden arınmış, sorunsuz ve güvenli günlük iletişim için tasarlanmıştır.
+📞 DAHA AKILLI ARAMA, NETLİK İÇİN TASARLANMIŞ
 
-📱 GİZLİLİĞİNİZ, BİZİM ÖNCELİĞİMİZ:  
-Dijital gizliliğinizin her şeyden önemli olduğu Fossify Telefon Uygulamasına hoş geldiniz. Verilerinize saygı duyan, kişisel bilgilerinizin güvenli ve gizli kalmasını sağlayan bir mobil deneyime geçin.
+NovaDial, temiz, güvenilir ve verimli bir arama deneyimi isteyen kullanıcılar için oluşturulmuş, gizlilik odaklı bir telefon uygulamasıdır. Fossify Phone'u temel alan ve bağımsız bir çatal olarak geliştirilen NovaDial, tamamen ücretsiz ve açık kaynak kalarak çağrı yönetimi, kullanılabilirlik ve performansta önemli iyileştirmeler sunuyor.
 
-🚀 KUSURSUZ PERFORMANS:
-Fossify Telefon Uygulaması, gizliliğinizi korurken telefonunuzun performansını artıran akıcı ve duyarlı bir mobil arayüz sunar. Verimlilik ve hız için optimize edilmiş, gecikmesiz, sorunsuz bir kullanıcı deneyimi yaşayın.
+🔒 ÖNCE GİZLİLİK
 
-🌐 AÇIK KAYNAK GÜVENCESİ:  
-Fossify Telefon Uygulaması ile şeffaflık parmaklarınızın ucunda. Açık kaynaklı bir temel üzerine inşa edilen uygulamamız, GitHub'daki kodumuzu gözden geçirmenize olanak tanıyarak güveni ve gizliliğe bağlı bir topluluğu teşvik eder.
+Telefon uygulamanız sizi izlememeli, sizin için çalışmalıdır. NovaDial hiçbir reklam, hiçbir izleyici, hiçbir satın alma ve gereksiz veri toplama içermez. Arama geçmişiniz, kişileriniz ve iletişiminiz kontrolünüz altında kalır.
 
-🖼️ KİŞİYE ÖZEL ÖZELLEŞTİRME:  
-Fossify Telefon Uygulaması ile mobil deneyiminizi özelleştirin. Tematik tasarımlardan işlevsel tercihlere kadar kişiselleştirilmiş bir arayüz için uygulama ayarlarınızı yapın. Sezgisel ve benzersiz bir kullanıcı arayüzünün keyfini çıkarın.
+📋 YENİDEN TASARLANMIŞ ÇAĞRI GEÇMİŞİ
 
-🔋 VERİMLİ KAYNAK YÖNETİMİ:  
-Fossify Telefon Uygulaması, optimum kaynak kullanımı için tasarlanmıştır ve pil ömrünün uzamasına katkıda bulunur. Telefonunuzun kaynaklarını hafifletir, cihazınızın pil tüketimini en aza indirerek verimli çalışmasını sağlar.
+NovaDial, hız ve kullanışlılığa odaklanan yeniden tasarlanmış bir çağrı geçmişi sistemi sunar.
 
-Fossify Telefon Uygulamasını şimdi indirin ve gizliliğin işlevsellikle sorunsuz bir şekilde harmanlandığı bir mobil dünyaya adım atın. Daha güvenli, kişiselleştirilmiş bir mobil deneyime doğru yolculuğunuz burada başlıyor.
+Geleneksel arama kayıtları zamanla karmaşık hale gelebilir ve aynı kişilerden gelen binlerce mükerrer giriş görüntülenebilir. NovaDial, tüm geçmiş arama kayıtlarını aynı anda yüklemek yerine, son aramaları benzersiz arayanlar etrafında düzenleyerek farklı bir yaklaşım benimsiyor.
 
-Daha fazla Fossify uygulaması keşfedin: https://www.fossify.org
-Açık Kaynak Kodu: https://www.github.com/FossifyOrg
-Reddit'teki topluluğa katılın: https://www.reddit.com/r/Fossify
-Telegram üzerinden bağlanın: https://t.me/Fossify
+Faydaları şunları içerir:
+
+• Daha hızlı başlatma ve daha sorunsuz gezinme
+• Daha temiz son aramalar arayüzü
+• Tekrarlanan çağrı girişlerinden kaynaklanan karmaşanın azalması
+• Her kişi için özel çağrı ayrıntıları sayfası
+• Gerektiğinde eksiksiz arama geçmişi mevcuttur
+
+NovaDial, ana son aramalar görünümünde aynı arayandan tekrarlanan yüzlerce girişi görüntülemek yerine, iletişim geçmişinizin kısa bir özetini gösterir. Ayrıntılı çağrı kayıtlarına, özel çağrı ayrıntıları ekranından erişilebilmektedir.
+
+🎨 MODERN VE KULLANICI DOSTU TASARIM
+
+NovaDial, kullanılabilirlik ve netliğe odaklanan kullanıcı arayüzü iyileştirmelerini sunar. Arayüz, günlük telefon kullanımı için daha akıcı bir deneyim sunarken aynı zamanda tanıdık gelecek şekilde tasarlanmıştır.
+
+⚡ HIZLI VE HAFİF
+
+Verimli ve duyarlı olacak şekilde tasarlanan NovaDial, çeviricide ve son arama ekranlarında gereksiz veri işlemeyi en aza indirerek, büyük arama geçmişine sahip kullanıcılar için bile sorunsuz bir deneyimin sürdürülmesine yardımcı olur.
+
+🌍 TAMAMEN AÇIK KAYNAK
+
+NovaDial açık kaynaklı bir yazılımdır. Herkes kaynak kodunu inceleyebilir, iyileştirmelere katkıda bulunabilir veya projenin geleceğini şekillendirmeye yardımcı olabilir.
+
+❤️ TOPLULUK ODAKLI KALKINMA
+
+NovaDial, odaklı geliştirme ve kullanıcı odaklı iyileştirmeler yoluyla arama deneyimini geliştirmek için oluşturulmuş, Fossify Phone'un bağımsız bir çatalıdır.
+
+NovaDial'ı indirin ve daha temiz, daha hızlı ve gizliliğe daha fazla saygılı bir telefon deneyiminin keyfini çıkarın.
+
+Açık Kaynak Kodu: https://www.github.com/dhilipmpms/NovaDial

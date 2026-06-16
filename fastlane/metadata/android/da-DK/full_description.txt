@@ -1,23 +1,43 @@
-Styrk dine opkald, beskyt dine data. Fossify Phone omdefinerer mobilapp-oplevelsen med uovertruffen privatliv og effektivitet. Fri for annoncer og påtrængende tilladelser er den designet til problemfri og sikker hverdagskommunikation.
+📞 SMARTERE OPKALDELSE, DESIGNET TIL TYDELIGHED
 
-📱 DIT PRIVATLIV, VORES PRIORITET:
-Velkommen til Fossify Phone-appen, hvor dit digitale privatliv er altafgørende. Skift til en mobiloplevelse, der respekterer dine data og sikrer, at dine personlige oplysninger forbliver sikre og private.
+NovaDial er en privatlivsfokuseret telefonapplikation bygget til brugere, der ønsker en ren, pålidelig og effektiv opkaldsoplevelse. Baseret på Fossify Phone og udviklet som en uafhængig gaffel, introducerer NovaDial betydelige forbedringer til opkaldsstyring, brugervenlighed og ydeevne, mens den forbliver helt gratis og åben kildekode.
 
-🚀 PROBLEMFRI YDELSE:
-Fossify Phone-appen tilbyder en flydende og responsiv mobilgrænseflade, der forbedrer din telefons ydeevne, samtidig med at dit privatliv beskyttes. Oplev en forsinkelsesfri, problemfri brugeroplevelse, optimeret til effektivitet og hastighed.
+🔒 PRIVACY FØRST
 
-🌐 OPEN SOURCE-GARANTI:
-Med Fossify Phone-appen er gennemsigtighed lige ved hånden. Bygget på et open source-fundament giver vores app dig mulighed for at gennemgå vores kode på GitHub, hvilket fremmer tillid og et fællesskab, der er forpligtet til privatliv.
+Din telefonapp skal fungere for dig, ikke spore dig. NovaDial indeholder ingen annoncer, ingen trackere, ingen køb og ingen unødvendig dataindsamling. Din opkaldshistorik, kontakter og kommunikation forbliver under din kontrol.
 
-🖼️ SKRÆDDERSYET TILPASNING:
-Tilpas din mobiloplevelse med Fossify Phone App. Juster dine appindstillinger for en personlig brugerflade, fra tematiske designs til funktionelle præferencer. Nyd en brugergrænseflade, der er intuitiv og unikt tilpasset din.
+📋 GENTAGET OPKALDSHISTORIE
 
-🔋 EFFEKTIV RESSOURCEHÅNDTERING:
-Fossify Phone App er designet til optimal ressourceudnyttelse, hvilket bidrager til forlænget batterilevetid. Den bruger kun få ressourcer på din telefon og sikrer, at din enhed kører effektivt med minimeret batteriforbrug.
+NovaDial introducerer et nydesignet opkaldshistoriksystem med fokus på hastighed og brugervenlighed.
 
-Download Fossify Phone App nu, og træd ind i en mobil verden, hvor privatliv problemfrit blandes med funktionalitet. Din rejse mod en mere sikker og personlig mobiloplevelse starter her.
+Traditionelle opkaldslogger kan blive rodet over tid, og vise tusindvis af duplikerede poster fra de samme kontakter. NovaDial tager en anden tilgang ved at organisere de seneste opkald omkring unikke opkaldere i stedet for at indlæse hver historisk opkaldspost på én gang.
 
-Udforsk flere Fossify-apps: https://www.fossify.org
-Open Source-kode: https://www.github.com/FossifyOrg
-Deltag i fællesskabet på Reddit: https://www.reddit.com/r/Fossify
-Forbind på Telegram: https://t.me/Fossify
+Fordelene omfatter:
+
+• Hurtigere opstart og smidigere navigation
+• Renere grænseflade for seneste opkald
+• Reduceret rod fra gentagne opkaldsposter
+• Dedikeret side med opkaldsdetaljer for hver kontakt
+• Fuldstændig opkaldshistorik tilgængelig, når det er nødvendigt
+
+I stedet for at vise hundredvis af gentagne indtastninger fra den samme opkalder i hovedvisningen for seneste opkald, viser NovaDial et kortfattet overblik over din kommunikationshistorik. Detaljerede opkaldsregistre forbliver tilgængelige via den dedikerede skærm med opkaldsdetaljer.
+
+🎨 MODERNE OG BRUGERVENLIGT DESIGN
+
+NovaDial introducerer UI-forbedringer med fokus på brugervenlighed og klarhed. Grænsefladen er designet til at føles bekendt, samtidig med at den giver en mere strømlinet oplevelse til daglig telefonbrug.
+
+⚡ HURTIG OG LET
+
+NovaDial er bygget til at være effektiv og lydhør og minimerer unødvendig databehandling i opkaldsskærmen og de seneste opkaldsskærme, hvilket hjælper med at opretholde en jævn oplevelse selv for brugere med store opkaldshistorik.
+
+🌍 FULDSTÆNDIG ÅBEN KILDE
+
+NovaDial er open source-software. Alle kan inspicere kildekoden, bidrage med forbedringer eller være med til at forme projektets fremtid.
+
+❤️ FÆLLESSKABSDRIVET UDVIKLING
+
+NovaDial er en uafhængig fork af Fossify Phone, skabt til at forbedre opkaldsoplevelsen gennem fokuseret udvikling og brugerdrevne forbedringer.
+
+Download NovaDial og nyd en renere, hurtigere og mere privatlivsrespekterende telefonoplevelse.
+
+Open Source-kode: https://www.github.com/dhilipmpms/NovaDial

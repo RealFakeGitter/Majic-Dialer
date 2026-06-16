@@ -1,23 +1,43 @@
-Potenzia le tue chiamate, salvaguarda i tuoi dati. Telefono Fossify ridefinisce l'esperienza delle app mobili con una privacy e un'efficienza senza pari. Privo di pubblicità e di permessi invasivi, è progettato per una comunicazione quotidiana sicura e senza interruzioni.
+📞 CHIAMATE PIÙ INTELLIGENTI, PROGETTATE PER LA CHIAREZZA
 
-📱 LA TUA PRIVACY, LA NOSTRA PRIORITÀ:
-Benvenuto nell'app Telefono Fossify, dove la tua privacy digitale è fondamentale. Passa a un'esperienza mobile che rispetta i tuoi dati, garantendo che le tue informazioni personali rimangano sicure e private.
+NovaDial è un'applicazione telefonica incentrata sulla privacy creata per gli utenti che desiderano un'esperienza di chiamata pulita, affidabile ed efficiente. Basato su Fossify Phone e sviluppato come fork indipendente, NovaDial introduce miglioramenti significativi alla gestione delle chiamate, all'usabilità e alle prestazioni pur rimanendo completamente gratuito e open source.
 
-🚀 PRESTAZIONI SENZA INTERRUZIONI:
-L'app Telefono Fossify offre un'interfaccia mobile fluida e reattiva, migliorando le prestazioni del telefono e salvaguardando la tua privacy. Prova un'esperienza d'uso fluida e senza ritardi, ottimizzata per l'efficienza e la velocità.
+🔒 LA PRIVACY PRIMA DI TUTTO
 
-🌐 GARANZIA OPEN-SOURCE:
-Con l'app Telefono Fossify, la trasparenza è a portata di mano. Costruita su una base open-source, la nostra app ti consente di esaminare il nostro codice su GitHub, favorendo la fiducia e una comunità impegnata nella tutela della privacy.
+L'app del tuo telefono dovrebbe funzionare per te, non monitorarti. NovaDial non contiene pubblicità, tracker, acquisti e raccolte di dati non necessarie. La cronologia delle chiamate, i contatti e le comunicazioni rimangono sotto il tuo controllo.
 
-🖼️ PERSONALIZZAZIONE SU MISURA:
-Personalizza la tua esperienza mobile con l'app Fossify Phone. Regola le impostazioni dell'app per ottenere un'interfaccia personalizzata, dal design tematico alle preferenze funzionali. Goditi un'interfaccia utente intuitiva e unica.
+📋 CRONOLOGIA CHIAMATE REIMMAGINATA
 
-🔋 GESTIONE EFFICIENTE DELLE RISORSE:
-L'app Telefono Fossify è progettata per un utilizzo ottimale delle risorse, contribuendo a prolungare la durata della batteria. Non consuma le risorse del telefono, assicurando un funzionamento efficiente del dispositivo e riducendo al minimo il consumo della batteria.
+NovaDial introduce un sistema di cronologia delle chiamate riprogettato incentrato sulla velocità e sull'usabilità.
 
-Scarica subito l'app Telefono Fossify ed entra in un mondo mobile in cui la privacy si fonde perfettamente con la funzionalità. Il tuo viaggio verso un'esperienza mobile più sicura e personalizzata inizia qui.
+I registri delle chiamate tradizionali possono diventare confusi nel tempo, visualizzando migliaia di voci duplicate dagli stessi contatti. NovaDial adotta un approccio diverso organizzando le chiamate recenti attorno a chiamanti unici invece di caricare contemporaneamente tutti i record storici delle chiamate.
 
-Esplora altre applicazioni Fossify: https://www.fossify.org
-Codice open-source: https://www.github.com/FossifyOrg
-Unisciti alla comunità su Reddit: https://www.reddit.com/r/Fossify
-Connettiti su Telegram: https://t.me/Fossify
+I vantaggi includono:
+
+• Avvio più rapido e navigazione più fluida
+• Interfaccia delle chiamate recenti più pulita
+• Riduzione del disordine dovuto alle chiamate ripetute
+• Pagina dedicata ai dettagli della chiamata per ciascun contatto
+• Cronologia completa delle chiamate disponibile quando necessario
+
+Invece di visualizzare centinaia di voci ripetute dallo stesso chiamante nella vista principale delle chiamate recenti, NovaDial mostra una panoramica concisa della cronologia delle comunicazioni. I record dettagliati delle chiamate rimangono accessibili tramite la schermata dei dettagli delle chiamate dedicata.
+
+🎨 DESIGN MODERNO E FACILE DA USARE
+
+NovaDial introduce perfezionamenti dell'interfaccia utente incentrati su usabilità e chiarezza. L'interfaccia è progettata per sembrare familiare fornendo al contempo un'esperienza più snella per l'utilizzo quotidiano del telefono.
+
+⚡ VELOCE E LEGGERO
+
+Costruito per essere efficiente e reattivo, NovaDial riduce al minimo l'elaborazione non necessaria dei dati nel dialer e nelle schermate delle chiamate recenti, contribuendo a mantenere un'esperienza fluida anche per gli utenti con una lunga cronologia delle chiamate.
+
+🌍 FONTE COMPLETAMENTE APERTA
+
+NovaDial è un software open source. Chiunque può ispezionare il codice sorgente, contribuire a miglioramenti o contribuire a plasmare il futuro del progetto.
+
+❤️ SVILUPPO GUIDATO DALLA COMUNITÀ
+
+NovaDial è un fork indipendente di Fossify Phone, creato per migliorare l'esperienza di chiamata attraverso uno sviluppo mirato e miglioramenti guidati dall'utente.
+
+Scarica NovaDial e goditi un'esperienza telefonica più pulita, più veloce e più rispettosa della privacy.
+
+Codice open source: https://www.github.com/dhilipmpms/NovaDial

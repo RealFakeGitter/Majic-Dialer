@@ -1,0 +1,4 @@
+• Fixed incoming call screen dismissal delay
+• Fixed ringer issue where sound played in vibrate mode
+• Suppressed Fossify donation prompts and badges
+• Resolved call history display lag upon call termination

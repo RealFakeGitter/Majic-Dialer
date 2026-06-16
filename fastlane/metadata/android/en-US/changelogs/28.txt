@@ -1,0 +1,4 @@
+• Fixed screen flickering in the recent calls log
+• Enhanced data synchronization and cache updates
+• Metadata and readme documentation updates
+• Fixed ringer issue where sound played in vibrate mode

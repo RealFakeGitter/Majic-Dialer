@@ -1,0 +1,5 @@
+• Added QR code contact sharing option
+• Support custom ringtones for individual contacts
+• Fixed call history import and export issues
+• Added maximum ringtone volume override feature
+• Redesigned call details and history layout
