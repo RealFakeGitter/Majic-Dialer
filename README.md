@@ -62,9 +62,10 @@ sdk.dir=/path/to/your/Android/sdk
 ```
 Examples:
 
-```properties```
+```properties
 sdk.dir=/home/username/Andoird/sdk
 ```
+
 ### Build the application
 
 Debug build:
