@@ -47,10 +47,43 @@ Download the latest APK from the Releases section or build from source.
 
 ## Building
 
+### Clone the repository
+
 ```bash
 git clone https://github.com/dhilipmpms/NovaDial.git
 cd NovaDial
+```
+### Configure Android SDK
+
+create a `local.properties` file in the project root and specify the path to you Android SDK:
+
+```properties
+sdk.dir=/path/to/your/Android/sdk
+```
+Examples:
+
+```properties
+sdk.dir=/home/username/Andoird/sdk
+```
+
+### Build the application
+
+Debug build:
+
+```bash
 ./gradlew assembleCoreDebug
+```
+
+Release build:
+
+```bash
+./gradlew assembleCoreRelease
+```
+
+Generated APKs can be found in:
+
+```text
+app/build/outputs/apk/
 ```
 
 ## Credits
@@ -62,6 +95,7 @@ Original Project:
 https://github.com/FossifyOrg/Phone
 
 Huge thanks to the Fossify team for creating and maintaining the original open-source application.
+
 
 ## Maintainer
 
