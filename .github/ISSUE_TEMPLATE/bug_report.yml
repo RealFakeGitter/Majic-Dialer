@@ -24,7 +24,7 @@ body:
           required: true
         - label: "This issue contains only one bug."
           required: true
-        - label: "I have read and understood the [contribution guidelines](https://github.com/dhilipmpms/NovaDial/blob/master/CONTRIBUTING.md)."
+        - label: "I have read and understood the [contribution guidelines](https://github.com/dhilipmpms/NovaDial/blob/main/CONTRIBUTING.md)."
           required: true
 
   - type: input
@@ -61,8 +61,6 @@ body:
     attributes:
       label: How did you install the app?
       options:
-        - F-Droid / IzzyOnDroid
-        - Google Play Store
         - GitHub releases
         - Built from source
         - Third-party website

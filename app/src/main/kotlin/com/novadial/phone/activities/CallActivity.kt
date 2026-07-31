@@ -179,6 +179,33 @@ class CallActivity : SimpleActivity() {
             CallManager.merge()
         }
 
+        onHoldSwap.setOnClickListener {
+            CallManager.swap()
+        }
+
+        onHoldMerge.setOnClickListener {
+            CallManager.merge()
+        }
+
+        onHoldEnd.setOnClickListener {
+            CallManager.endHeldCall()
+        }
+
+        callWaitingAccept.setOnClickListener {
+            CallManager.acceptRingingCall()
+        }
+
+        callWaitingDecline.setOnClickListener {
+            CallManager.rejectRingingCall()
+        }
+
+        callWaitingDecline.background.applyColorFilter(getColor(R.color.md_red_600))
+        callWaitingDecline.applyColorFilter(android.graphics.Color.WHITE)
+        callWaitingAccept.background.applyColorFilter(getColor(R.color.md_green_600))
+        callWaitingAccept.applyColorFilter(android.graphics.Color.WHITE)
+        callWaitingHolder.background.applyColorFilter(getProperBackgroundColor().lightenColor(2))
+        callWaitingIcon.applyColorFilter(getProperTextColor())
+
         callManage.setOnClickListener {
             startActivity(Intent(this@CallActivity, ConferenceActivity::class.java))
         }
@@ -680,6 +707,9 @@ class CallActivity : SimpleActivity() {
 
     private fun updateState() {
         val phoneState = CallManager.getPhoneState()
+        val ringingCall = CallManager.getRingingCall()
+        val primaryCall = CallManager.getPrimaryCall()
+
         if (phoneState is SingleCall) {
             updateCallState(phoneState.call)
             updateCallOnHoldState(null)
@@ -693,6 +723,13 @@ class CallActivity : SimpleActivity() {
             updateCallOnHoldState(phoneState.onHold)
         } else if (phoneState is NoCall) {
             endCall()
+            return
+        }
+
+        if (ringingCall != null && primaryCall != null && ringingCall != primaryCall) {
+            updateCallWaitingState(ringingCall)
+        } else {
+            binding.callWaitingHolder.beGone()
         }
 
         updateCallAudioState(CallManager.getCallAudioRoute())
@@ -703,14 +740,40 @@ class CallActivity : SimpleActivity() {
         if (hasCallOnHold) {
             getCallContact(applicationContext, call) { contact ->
                 runOnUiThread {
-                    binding.onHoldCallerName.text = getContactNameOrNumber(contact)
+                    val name = getContactNameOrNumber(contact)
+                    binding.onHoldCallerName.text = if (contact.number.isNotEmpty() && contact.number != contact.name) {
+                        "$name (${contact.number})"
+                    } else {
+                        name
+                    }
                 }
             }
         }
+        val primaryCall = CallManager.getPrimaryCall()
+        val canMerge = primaryCall?.hasCapability(Call.Details.CAPABILITY_MERGE_CONFERENCE) == true ||
+            primaryCall?.conferenceableCalls?.isNotEmpty() == true
         binding.apply {
             onHoldStatusHolder.beVisibleIf(hasCallOnHold)
+            onHoldMerge.beVisibleIf(hasCallOnHold && canMerge)
             controlsSingleCall.beVisibleIf(!hasCallOnHold)
             controlsTwoCalls.beVisibleIf(hasCallOnHold)
+        }
+    }
+
+    private fun updateCallWaitingState(ringingCall: Call) {
+        getCallContact(applicationContext, ringingCall) { contact ->
+            runOnUiThread {
+                binding.apply {
+                    val name = getContactNameOrNumber(contact)
+                    callWaitingCallerName.text = if (contact.number.isNotEmpty() && contact.number != contact.name) {
+                        "$name (${contact.number})"
+                    } else {
+                        name
+                    }
+                    callWaitingHolder.beVisible()
+                    incomingCallHolder.beGone()
+                }
+            }
         }
     }
 

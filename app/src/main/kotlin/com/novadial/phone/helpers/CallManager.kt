@@ -22,10 +22,8 @@ class CallManager {
         private val listeners = CopyOnWriteArraySet<CallManagerListener>()
 
         fun onCallAdded(call: Call) {
-            this.call = call
-            calls.add(call)
-            for (listener in listeners) {
-                listener.onPrimaryCallChanged(call)
+            if (!calls.contains(call)) {
+                calls.add(call)
             }
             call.registerCallback(object : Call.Callback() {
                 override fun onStateChanged(call: Call, state: Int) {
@@ -40,11 +38,16 @@ class CallManager {
                     updateState()
                 }
             })
+            updateState()
         }
 
         fun onCallRemoved(call: Call) {
             calls.remove(call)
             updateState()
+            val remainingCall = calls.firstOrNull()
+            if (remainingCall != null && remainingCall.getStateCompat() == Call.STATE_HOLDING) {
+                remainingCall.unhold()
+            }
         }
 
         fun onAudioStateChanged(audioState: CallAudioState) {
@@ -54,43 +57,22 @@ class CallManager {
             }
         }
 
+        fun getActiveCall(): Call? = calls.find { it.getStateCompat() == Call.STATE_ACTIVE }
+        fun getConnectingCall(): Call? = calls.find { it.getStateCompat() == Call.STATE_CONNECTING || it.getStateCompat() == Call.STATE_DIALING }
+        fun getHeldCall(): Call? = calls.find { it.getStateCompat() == Call.STATE_HOLDING }
+        fun getRingingCall(): Call? = calls.find { it.getStateCompat() == Call.STATE_RINGING }
+
         fun getPhoneState(): PhoneState {
             return when (calls.size) {
                 0 -> NoCall
                 1 -> SingleCall(calls.first())
-                2 -> {
-                    val active = calls.find { it.getStateCompat() == Call.STATE_ACTIVE }
-                    val newCall = calls.find { it.getStateCompat() == Call.STATE_CONNECTING || it.getStateCompat() == Call.STATE_DIALING }
-                    val onHold = calls.find { it.getStateCompat() == Call.STATE_HOLDING }
-                    if (active != null && newCall != null) {
-                        TwoCalls(newCall, active)
-                    } else if (newCall != null && onHold != null) {
-                        TwoCalls(newCall, onHold)
-                    } else if (active != null && onHold != null) {
-                        TwoCalls(active, onHold)
-                    } else {
-                        TwoCalls(calls[0], calls[1])
-                    }
-                }
-
                 else -> {
-                    val conference = calls.find { it.isConference() } ?: return NoCall
-                    val secondCall = if (conference.children.size + 1 != calls.size) {
-                        calls.filter { !it.isConference() }
-                            .subtract(conference.children.toSet())
-                            .firstOrNull()
+                    val primary = getPrimaryCall() ?: return NoCall
+                    val held = getHeldCall() ?: calls.find { it != primary && it.getStateCompat() != Call.STATE_RINGING }
+                    if (held != null) {
+                        TwoCalls(primary, held)
                     } else {
-                        null
-                    }
-                    if (secondCall == null) {
-                        SingleCall(conference)
-                    } else {
-                        val newCallState = secondCall.getStateCompat()
-                        if (newCallState == Call.STATE_ACTIVE || newCallState == Call.STATE_CONNECTING || newCallState == Call.STATE_DIALING) {
-                            TwoCalls(secondCall, conference)
-                        } else {
-                            TwoCalls(conference, secondCall)
-                        }
+                        SingleCall(primary)
                     }
                 }
             }
@@ -116,11 +98,7 @@ class CallManager {
         }
 
         private fun updateState() {
-            val primaryCall = when (val phoneState = getPhoneState()) {
-                is NoCall -> null
-                is SingleCall -> phoneState.call
-                is TwoCalls -> phoneState.active
-            }
+            val primaryCall = getPrimaryCall()
             var notify = true
             if (primaryCall == null) {
                 call = null
@@ -142,19 +120,54 @@ class CallManager {
         }
 
         fun getPrimaryCall(): Call? {
-            return call
+            return getActiveCall()
+                ?: getConnectingCall()
+                ?: getHeldCall()
+                ?: getRingingCall()
+                ?: calls.find { it.isConference() }
+                ?: calls.firstOrNull()
         }
 
         fun getConferenceCalls(): List<Call> {
             return calls.find { it.isConference() }?.children ?: emptyList()
         }
 
+        fun acceptRingingCall() {
+            getRingingCall()?.answer(VideoProfile.STATE_AUDIO_ONLY)
+        }
+
+        fun rejectRingingCall() {
+            val ringingCall = getRingingCall()
+            if (ringingCall != null) {
+                if (ringingCall.getStateCompat() == Call.STATE_RINGING) {
+                    ringingCall.reject(false, null)
+                } else {
+                    ringingCall.disconnect()
+                }
+            }
+        }
+
+        fun endHeldCall() {
+            val heldCall = getHeldCall()
+            if (heldCall != null && heldCall.getStateCompat() != Call.STATE_DISCONNECTED && heldCall.getStateCompat() != Call.STATE_DISCONNECTING) {
+                heldCall.disconnect()
+            }
+        }
+
         fun accept() {
-            call?.answer(VideoProfile.STATE_AUDIO_ONLY)
+            val ringingCall = getRingingCall()
+            if (ringingCall != null) {
+                acceptRingingCall()
+            } else {
+                getPrimaryCall()?.answer(VideoProfile.STATE_AUDIO_ONLY)
+            }
         }
 
         fun reject() {
-            if (call != null) {
+            val ringingCall = getRingingCall()
+            if (ringingCall != null && ringingCall != getPrimaryCall()) {
+                rejectRingingCall()
+            } else if (call != null) {
                 val state = getState()
                 if (state == Call.STATE_RINGING) {
                     call!!.reject(false, null)
