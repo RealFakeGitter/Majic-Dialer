@@ -21,6 +21,7 @@ import com.novadial.phone.R
 import com.novadial.phone.activities.CallActivity
 import com.novadial.phone.receivers.CallActionReceiver
 import com.novadial.phone.extensions.isOutgoing
+import com.novadial.phone.extensions.getStateCompat
 import com.novadial.phone.extensions.config
 import com.novadial.phone.models.AudioRoute
 
@@ -36,9 +37,11 @@ class CallNotificationManager(private val context: Context) {
 
     @SuppressLint("NewApi")
     fun setupNotification(lowPriority: Boolean = false) {
-        getCallContact(context.applicationContext, CallManager.getPrimaryCall()) { callContact ->
+        val ringingCall = CallManager.getRingingCall()
+        val targetCall = ringingCall ?: CallManager.getPrimaryCall()
+        getCallContact(context.applicationContext, targetCall) { callContact ->
             val callContactAvatar = callContactAvatarHelper.getCallContactAvatar(callContact)
-            val callState = CallManager.getState()
+            val callState = targetCall?.getStateCompat() ?: CallManager.getState()
             val isHighPriority = callState == Call.STATE_RINGING && !lowPriority
             val channelId =
                 if (isHighPriority) "simple_dialer_call_high_priority" else "simple_dialer_call"
@@ -187,7 +190,7 @@ class CallNotificationManager(private val context: Context) {
 
             val notification = builder.build()
             // it's rare but possible for the call state to change by now
-            if (CallManager.getState() == callState) {
+            if (targetCall?.getStateCompat() == callState || CallManager.getState() == callState) {
                 val service = context as? Service
                 if (service != null) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

@@ -697,6 +697,8 @@ class CallActivity : SimpleActivity() {
         binding.apply {
             if (statusTextId != 0) {
                 callStatusLabel.text = getString(statusTextId)
+            } else {
+                callStatusLabel.text = ""
             }
 
             callManage.beVisibleIf(!isCallEnded && call.hasCapability(Call.Details.CAPABILITY_MANAGE_CONFERENCE))
@@ -710,26 +712,43 @@ class CallActivity : SimpleActivity() {
         val ringingCall = CallManager.getRingingCall()
         val primaryCall = CallManager.getPrimaryCall()
 
-        if (phoneState is SingleCall) {
-            updateCallState(phoneState.call)
-            updateCallOnHoldState(null)
-            val state = phoneState.call.getStateCompat()
-            val isSingleCallActionsEnabled = !isCallEnded && (state == Call.STATE_ACTIVE || state == Call.STATE_DISCONNECTED
-                || state == Call.STATE_DISCONNECTING || state == Call.STATE_HOLDING)
-            setActionButtonEnabled(binding.callToggleHold, isSingleCallActionsEnabled)
-            setActionButtonEnabled(binding.callAdd, isSingleCallActionsEnabled)
-        } else if (phoneState is TwoCalls) {
-            updateCallState(phoneState.active)
-            updateCallOnHoldState(phoneState.onHold)
-        } else if (phoneState is NoCall) {
-            endCall()
-            return
-        }
-
         if (ringingCall != null && primaryCall != null && ringingCall != primaryCall) {
+            binding.incomingCallHolder.beGone()
             updateCallWaitingState(ringingCall)
-        } else {
+            if (phoneState is SingleCall) {
+                updateCallState(phoneState.call)
+                updateCallContactInfo(phoneState.call)
+                updateCallOnHoldState(null)
+            } else if (phoneState is TwoCalls) {
+                updateCallState(phoneState.active)
+                updateCallContactInfo(phoneState.active)
+                updateCallOnHoldState(phoneState.onHold)
+            }
+        } else if (ringingCall != null && (primaryCall == null || ringingCall == primaryCall)) {
             binding.callWaitingHolder.beGone()
+            updateCallState(ringingCall)
+            updateCallContactInfo(ringingCall)
+            updateCallOnHoldState(null)
+        } else {
+            binding.incomingCallHolder.beGone()
+            binding.callWaitingHolder.beGone()
+            if (phoneState is SingleCall) {
+                updateCallState(phoneState.call)
+                updateCallContactInfo(phoneState.call)
+                updateCallOnHoldState(null)
+                val state = phoneState.call.getStateCompat()
+                val isSingleCallActionsEnabled = !isCallEnded && (state == Call.STATE_ACTIVE || state == Call.STATE_DISCONNECTED
+                    || state == Call.STATE_DISCONNECTING || state == Call.STATE_HOLDING)
+                setActionButtonEnabled(binding.callToggleHold, isSingleCallActionsEnabled)
+                setActionButtonEnabled(binding.callAdd, isSingleCallActionsEnabled)
+            } else if (phoneState is TwoCalls) {
+                updateCallState(phoneState.active)
+                updateCallContactInfo(phoneState.active)
+                updateCallOnHoldState(phoneState.onHold)
+            } else if (phoneState is NoCall) {
+                endCall()
+                return
+            }
         }
 
         updateCallAudioState(CallManager.getCallAudioRoute())
@@ -762,6 +781,9 @@ class CallActivity : SimpleActivity() {
 
     private fun updateCallWaitingState(ringingCall: Call) {
         getCallContact(applicationContext, ringingCall) { contact ->
+            if (ringingCall.getStateCompat() != Call.STATE_RINGING) {
+                return@getCallContact
+            }
             runOnUiThread {
                 binding.apply {
                     val name = getContactNameOrNumber(contact)
@@ -779,11 +801,11 @@ class CallActivity : SimpleActivity() {
 
     private fun updateCallContactInfo(call: Call?) {
         getCallContact(applicationContext, call) { contact ->
-            if (call != CallManager.getPrimaryCall()) {
+            if (call != CallManager.getPrimaryCall() && call != CallManager.getRingingCall()) {
                 return@getCallContact
             }
             callContact = contact
-            val avatar = if (!call.isConference()) contact.photoUri else null
+            val avatar = if (call != null && !call.isConference()) contact.photoUri else null
             runOnUiThread {
                 updateOtherPersonsInfo(avatar)
                 checkCalledSIMCard()

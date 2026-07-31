@@ -32,7 +32,11 @@ class CallService : InCallService() {
         override fun onStateChanged(call: Call, state: Int) {
             super.onStateChanged(call, state)
             if (state == Call.STATE_DISCONNECTED || state == Call.STATE_DISCONNECTING) {
-                callNotificationManager.cancelNotification()
+                if (CallManager.getPhoneState() == NoCall) {
+                    callNotificationManager.cancelNotification()
+                } else {
+                    callNotificationManager.setupNotification()
+                }
             } else {
                 callNotificationManager.setupNotification()
             }
