@@ -15,6 +15,26 @@ import android.graphics.drawable.Icon
 import android.os.Build
 import android.telecom.Call
 import android.widget.RemoteViews
+import androidx.core.app.NotificationCompat
+import androidx.core.app.Person as CorePerson
+import androidx.core.app.NotificationCompat.Action
+import androidx.core.app.NotificationCompat.MessagingStyle
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.RemoteInput
+import androidx.core.app.Person
+import androidx.core.app.NotificationCompat.BubbleMetadata
+import androidx.core.app.NotificationCompat.Builder
+import androidx.core.app.NotificationCompat.MessagingStyle.Message
+import androidx.core.app.NotificationCompat.BuilderExtender
+import androidx.core.app.NotificationCompat.DecoratedCustomViewStyle
+import androidx.core.app.NotificationCompat.BigTextStyle
+import androidx.core.app.NotificationCompat.CallStyle
+import androidx.core.app.NotificationCompat.CarExtender
+import androidx.core.app.NotificationCompat.CallStyle
+import androidx.core.app.NotificationCompat.BubbleMetadata.Builder as BubbleBuilder
+import androidx.core.content.pm.ShortcutInfoCompat
+import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.graphics.drawable.IconCompat
 import org.fossify.commons.extensions.notificationManager
 import org.fossify.commons.extensions.setText
 import org.fossify.commons.extensions.setVisibleIf
@@ -31,6 +51,7 @@ class CallNotificationManager(private val context: Context) {
         private const val CALL_NOTIFICATION_ID = 42
         private const val ACCEPT_CALL_CODE = 0
         private const val DECLINE_CALL_CODE = 1
+        private const val CALL_SHORTCUT_ID = "call_shortcut"
     }
 
     private val notificationManager = context.notificationManager
@@ -156,8 +177,38 @@ class CallNotificationManager(private val context: Context) {
                 .setStyle(Notification.DecoratedCustomViewStyle())
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (context.config.enableCallBubbles && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 try {
+                    val shortcutIntent = Intent(context, CallActivity::class.java).apply {
+                        action = Intent.ACTION_VIEW
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                            Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                            Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    }
+
+                    val shortcut = ShortcutInfoCompat.Builder(context, CALL_SHORTCUT_ID)
+                        .setShortLabel(callerName)
+                        .setLongLabel(callerName)
+                        .setIntent(shortcutIntent)
+                        .setIcon(IconCompat.createWithResource(context, iconId))
+                        .setLongLived(true)
+                        .build()
+
+                    ShortcutManagerCompat.pushDynamicShortcut(context, shortcut)
+
+                    val person = Person.Builder()
+                        .setName(callerName)
+                        .setIcon(
+                            if (callContactAvatar != null) {
+                                Icon.createWithBitmap(callContactAvatarHelper.getCircularBitmap(callContactAvatar))
+                            } else {
+                                Icon.createWithResource(context, iconId)
+                            }
+                        )
+                        .setImportant(true)
+                        .build()
+
                     val bubbleMeta = Notification.BubbleMetadata.Builder(
                         bubblePendingIntent,
                         Icon.createWithResource(context, iconId)
@@ -165,7 +216,10 @@ class CallNotificationManager(private val context: Context) {
                         .setAutoExpandBubble(false)
                         .setSuppressNotification(false)
                         .build()
-                    builder.setBubbleMetadata(bubbleMeta)
+
+                    builder
+                        .setShortcutId(CALL_SHORTCUT_ID)
+                        .setBubbleMetadata(bubbleMeta)
                 } catch (_: Throwable) {
                 }
             }
