@@ -107,7 +107,6 @@
             android:label="@string/call_history"
             android:parentActivityName=".activities.ContactCallHistoryActivity" />
 
-
         <activity
             android:name=".activities.ConferenceActivity"
             android:configChanges="orientation"
@@ -135,7 +134,10 @@
             android:label="@string/ongoing_call"
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
-            android:showOnLockScreen="true" />
+            android:showOnLockScreen="true"
+            android:allowEmbedded="true"
+            android:documentLaunchMode="always"
+            android:resizeableActivity="true" />
 
         <activity
             android:name=".activities.DialpadActivity"
