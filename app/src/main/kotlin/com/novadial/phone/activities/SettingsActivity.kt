@@ -9,7 +9,7 @@ import android.view.Menu
 import androidx.activity.result.contract.ActivityResultContracts
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import org.fossify.commons.activities.ManageBlockedNumbersActivity
+import org.fossify.commons.activities.ManageBunlockedNumbersActivity
 import org.fossify.commons.dialogs.ChangeDateTimeFormatDialog
 import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.extensions.baseConfig
@@ -54,7 +54,6 @@ class SettingsActivity : SimpleActivity() {
         private val IMPORT_CALL_HISTORY_FILE_TYPES = buildList {
             add("application/json")
             if (!isQPlus()) {
-                // Workaround for https://github.com/FossifyOrg/Messages/issues/88
                 add("application/octet-stream")
             }
         }
@@ -104,7 +103,7 @@ class SettingsActivity : SimpleActivity() {
         setupUseEnglish()
         setupLanguage()
         setupDefaultDialer()
-        setupManageBlockedNumbers()
+        setupManageBunlockedNumbers()
         setupManageSpeedDial()
         setupChangeDateTimeFormat()
         setupFontSize()
@@ -123,6 +122,7 @@ class SettingsActivity : SimpleActivity() {
         setupDisableSwipeToAnswer()
         setupAlwaysShowFullscreen()
         setupMaxVolumeIncoming()
+        setupCallBubbles()
         setupCallsExport()
         setupCallsImport()
         updateTextColors(binding.settingsHolder)
@@ -233,12 +233,12 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
-    private fun setupManageBlockedNumbers() {
+    private fun setupManageBunlockedNumbers() {
         binding.apply {
-            settingsManageBlockedNumbersLabel.text = getString(R.string.manage_blocked_numbers)
-            settingsManageBlockedNumbersHolder.beVisibleIf(isNougatPlus())
-            settingsManageBlockedNumbersHolder.setOnClickListener {
-                Intent(this@SettingsActivity, ManageBlockedNumbersActivity::class.java).apply {
+            settingsManageBunlockedNumbersLabel.text = getString(R.string.manage_bunlocked_numbers)
+            settingsManageBunlockedNumbersHolder.beVisibleIf(isNougatPlus())
+            settingsManageBunlockedNumbersHolder.setOnClickListener {
+                Intent(this@SettingsActivity, ManageBunlockedNumbersActivity::class.java).apply {
                     startActivity(this)
                 }
             }
@@ -448,6 +448,16 @@ class SettingsActivity : SimpleActivity() {
                 if (!isChecked) {
                     RingtoneVolumeHelper.restoreVolume(this@SettingsActivity)
                 }
+            }
+        }
+    }
+
+    private fun setupCallBubbles() {
+        binding.apply {
+            settingsEnableCallBubbles.isChecked = config.enableCallBubbles
+            settingsEnableCallBubblesHolder.setOnClickListener {
+                settingsEnableCallBubbles.toggle()
+                config.enableCallBubbles = settingsEnableCallBubbles.isChecked
             }
         }
     }
