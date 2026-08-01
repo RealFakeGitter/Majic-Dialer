@@ -6,44 +6,28 @@ import android.app.NotificationChannel
 import android.app.NotificationManager.IMPORTANCE_DEFAULT
 import android.app.NotificationManager.IMPORTANCE_HIGH
 import android.app.PendingIntent
-import android.app.Person
 import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
-import android.graphics.drawable.Icon
 import android.os.Build
 import android.telecom.Call
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
-import androidx.core.app.Person as CorePerson
-import androidx.core.app.NotificationCompat.Action
-import androidx.core.app.NotificationCompat.MessagingStyle
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.app.RemoteInput
-import androidx.core.app.Person
-import androidx.core.app.NotificationCompat.BubbleMetadata
-import androidx.core.app.NotificationCompat.Builder
-import androidx.core.app.NotificationCompat.MessagingStyle.Message
-import androidx.core.app.NotificationCompat.BuilderExtender
-import androidx.core.app.NotificationCompat.DecoratedCustomViewStyle
-import androidx.core.app.NotificationCompat.BigTextStyle
-import androidx.core.app.NotificationCompat.CallStyle
-import androidx.core.app.NotificationCompat.CarExtender
-import androidx.core.app.NotificationCompat.CallStyle
-import androidx.core.app.NotificationCompat.BubbleMetadata.Builder as BubbleBuilder
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
+import com.novadial.phone.R
+import com.novadial.phone.activities.CallActivity
+import com.novadial.phone.extensions.config
+import com.novadial.phone.extensions.isOutgoing
+import com.novadial.phone.receivers.CallActionReceiver
+import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.notificationManager
 import org.fossify.commons.extensions.setText
 import org.fossify.commons.extensions.setVisibleIf
-import org.fossify.commons.extensions.getProperPrimaryColor
-import com.novadial.phone.R
-import com.novadial.phone.activities.CallActivity
-import com.novadial.phone.receivers.CallActionReceiver
-import com.novadial.phone.extensions.isOutgoing
-import com.novadial.phone.extensions.config
+import org.fossify.commons.helpers.isQPlus
 import com.novadial.phone.models.AudioRoute
 
 class CallNotificationManager(private val context: Context) {
@@ -63,42 +47,51 @@ class CallNotificationManager(private val context: Context) {
             val callContactAvatar = callContactAvatarHelper.getCallContactAvatar(callContact)
             val callState = CallManager.getState()
             val isHighPriority = callState == Call.STATE_RINGING && !lowPriority
-            val channelId =
-                if (isHighPriority) "simple_dialer_call_high_priority" else "simple_dialer_call"
+            val channelId = if (isHighPriority) "simple_dialer_call_high_priority" else "simple_dialer_call"
             createNotificationChannel(isHighPriority, channelId)
 
             val openAppIntent = CallActivity.getStartIntent(context)
-            val openAppPendingIntent =
-                PendingIntent.getActivity(context, 0, openAppIntent, PendingIntent.FLAG_MUTABLE)
-
-            val bubblePendingIntent =
-                PendingIntent.getActivity(context, 5, openAppIntent, PendingIntent.FLAG_MUTABLE)
+            val openAppPendingIntent = PendingIntent.getActivity(context, 0, openAppIntent, PendingIntent.FLAG_MUTABLE)
+            val bubblePendingIntent = PendingIntent.getActivity(context, 5, openAppIntent, PendingIntent.FLAG_MUTABLE)
 
             val acceptCallIntent = Intent(context, CallActionReceiver::class.java).apply { action = ACCEPT_CALL }
             val acceptPendingIntent = PendingIntent.getBroadcast(
-                context, ACCEPT_CALL_CODE, acceptCallIntent,
+                context,
+                ACCEPT_CALL_CODE,
+                acceptCallIntent,
                 PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
             )
 
             val declineCallIntent = Intent(context, CallActionReceiver::class.java).apply { action = DECLINE_CALL }
             val declinePendingIntent = PendingIntent.getBroadcast(
-                context, DECLINE_CALL_CODE, declineCallIntent,
+                context,
+                DECLINE_CALL_CODE,
+                declineCallIntent,
                 PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
             )
 
             val muteCallIntent = Intent(context, CallActionReceiver::class.java).apply { action = TOGGLE_MUTE }
             val mutePendingIntent = PendingIntent.getBroadcast(
-                context, 2, muteCallIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                context,
+                2,
+                muteCallIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             )
 
             val speakerCallIntent = Intent(context, CallActionReceiver::class.java).apply { action = TOGGLE_SPEAKER }
             val speakerPendingIntent = PendingIntent.getBroadcast(
-                context, 3, speakerCallIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                context,
+                3,
+                speakerCallIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             )
 
             val deleteCallIntent = Intent(context, CallActionReceiver::class.java).apply { action = DISMISS_CALL_NOTIFICATION }
             val deletePendingIntent = PendingIntent.getBroadcast(
-                context, 4, deleteCallIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                context,
+                4,
+                deleteCallIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             )
 
             var callerName = callContact.name.ifEmpty { context.getString(R.string.unknown_caller) }
@@ -162,10 +155,13 @@ class CallNotificationManager(private val context: Context) {
                 }
             }
 
-            val isOutgoing = CallManager.getPrimaryCall()?.isOutgoing() == true
-            val iconId = if (isOutgoing) R.drawable.ic_call_made_notification else R.drawable.ic_call_received_notification
+            val iconId = if (CallManager.getPrimaryCall()?.isOutgoing() == true) {
+                R.drawable.ic_call_made_notification
+            } else {
+                R.drawable.ic_call_received_notification
+            }
 
-            val builder = Notification.Builder(context, channelId)
+            val builder = NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(iconId)
                 .setContentIntent(openAppPendingIntent)
                 .setDeleteIntent(deletePendingIntent)
@@ -173,9 +169,8 @@ class CallNotificationManager(private val context: Context) {
                 .setCustomContentView(collapsedView)
                 .setOngoing(true)
                 .setUsesChronometer(callState == Call.STATE_ACTIVE)
-                .setChannelId(channelId)
-                .setStyle(Notification.DecoratedCustomViewStyle())
-                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
 
             if (context.config.enableCallBubbles && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 try {
@@ -197,21 +192,9 @@ class CallNotificationManager(private val context: Context) {
 
                     ShortcutManagerCompat.pushDynamicShortcut(context, shortcut)
 
-                    val person = Person.Builder()
-                        .setName(callerName)
-                        .setIcon(
-                            if (callContactAvatar != null) {
-                                Icon.createWithBitmap(callContactAvatarHelper.getCircularBitmap(callContactAvatar))
-                            } else {
-                                Icon.createWithResource(context, iconId)
-                            }
-                        )
-                        .setImportant(true)
-                        .build()
-
-                    val bubbleMeta = Notification.BubbleMetadata.Builder(
+                    val bubbleMetadata = NotificationCompat.BubbleMetadata.Builder(
                         bubblePendingIntent,
-                        Icon.createWithResource(context, iconId)
+                        IconCompat.createWithResource(context, iconId)
                     )
                         .setAutoExpandBubble(false)
                         .setSuppressNotification(false)
@@ -219,7 +202,7 @@ class CallNotificationManager(private val context: Context) {
 
                     builder
                         .setShortcutId(CALL_SHORTCUT_ID)
-                        .setBubbleMetadata(bubbleMeta)
+                        .setBubbleMetadata(bubbleMetadata)
                 } catch (_: Throwable) {
                 }
             }
