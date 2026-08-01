@@ -6,6 +6,25 @@
 
 NovaDial is a modern Android dialer focused on speed, privacy, AMOLED-friendly design, and a clean calling experience.
 
+<p align="center">
+  <a href="https://f-droid.org/en/packages/com.novadial.phone/">
+    <img
+      src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
+      alt="Get it on F-Droid"
+      width="220">
+  </a>
+
+</p>
+
+<p align="center">
+  <a href="https://github.com/dhilipmpms/NovaDial/releases"><img src="https://img.shields.io/github/v/release/dhilipmpms/NovaDial?style=flat-square&color=blue" alt="Latest Release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPL--3.0-green.svg?style=flat-square" alt="License"></a>
+  <img src="https://img.shields.io/badge/Platform-Android-00C853?style=flat-square" alt="Platform">
+  <img src="https://img.shields.io/badge/Design-Material--3-blueviolet?style=flat-square" alt="Material 3">
+  <img src="https://img.shields.io/github/downloads/dhilipmpms/NovaDial/total"
+</p>
+
+
 ## About
 
 NovaDial is a community-driven fork of Fossify Phone with additional UI improvements, performance optimizations, customization options, and dialer enhancements.
