@@ -405,6 +405,21 @@
             </RelativeLayout>
 
             <RelativeLayout
+                android:id="@+id/settings_enable_call_bubbles_holder"
+                style="@style/SettingsHolderSwitchStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/settings_enable_call_bubbles"
+                    style="@style/SettingsSwitchStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/enable_call_bubbles" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
                 android:id="@+id/settings_always_show_fullscreen_holder"
                 style="@style/SettingsHolderSwitchStyle"
                 android:layout_width="match_parent"
