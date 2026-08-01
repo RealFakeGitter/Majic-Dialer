@@ -43,9 +43,12 @@ import kotlin.math.min
 class CallActivity : SimpleActivity() {
     companion object {
         fun getStartIntent(context: Context): Intent {
-            val openAppIntent = Intent(context, CallActivity::class.java)
-            openAppIntent.flags = Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-            return openAppIntent
+            return Intent(context, CallActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                    Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
         }
     }
 
@@ -118,11 +121,9 @@ class CallActivity : SimpleActivity() {
         val callState = CallManager.getState()
         if (callState == Call.STATE_CONNECTING || callState == Call.STATE_DIALING) {
             toast(R.string.call_is_being_connected)
-            // Allow user to go back but show toast - they can return to call via notification
             return false
         }
 
-        // Allow minimizing active call - user can return via notification
         return false
     }
 
@@ -481,7 +482,6 @@ class CallActivity : SimpleActivity() {
                 } else {
                     getString(if (isSpeakerOn) R.string.turn_speaker_off else R.string.turn_speaker_on)
                 }
-                // show speaker icon when a headset is connected, a headset icon maybe confusing to some
                 if (route == AudioRoute.WIRED_HEADSET) {
                     setImageResource(R.drawable.ic_volume_down_vector)
                 } else {
@@ -632,6 +632,9 @@ class CallActivity : SimpleActivity() {
                             val simColor = sim.color.adjustForContrast(getProperBackgroundColor())
                             callSimId.setTextColor(simColor.getContrastColor())
                             callSimImage.applyColorFilter(simColor)
+
+                            // if an app bubble re-opens this activity, keep UI updated
+                            updateState()
                         }
 
                         val acceptDrawableId = when (index) {
@@ -772,7 +775,7 @@ class CallActivity : SimpleActivity() {
 
         try {
             audioManager.mode = AudioManager.MODE_NORMAL
-        } catch (ignored: Exception) {
+        } catch (_: Exception) {
         }
 
         isCallEnded = true
@@ -907,7 +910,7 @@ class CallActivity : SimpleActivity() {
     }
 
     private fun clearInput(): Boolean {
-        binding.dialpadInput.setText("");
-        return true;
+        binding.dialpadInput.setText("")
+        return true
     }
 }
