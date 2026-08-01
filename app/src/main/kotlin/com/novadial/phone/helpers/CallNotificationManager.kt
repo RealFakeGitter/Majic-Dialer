@@ -6,10 +6,12 @@ import android.app.NotificationChannel
 import android.app.NotificationManager.IMPORTANCE_DEFAULT
 import android.app.NotificationManager.IMPORTANCE_HIGH
 import android.app.PendingIntent
+import android.app.Person
 import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.telecom.Call
 import android.widget.RemoteViews
@@ -48,60 +50,38 @@ class CallNotificationManager(private val context: Context) {
             val openAppPendingIntent =
                 PendingIntent.getActivity(context, 0, openAppIntent, PendingIntent.FLAG_MUTABLE)
 
-            val acceptCallIntent = Intent(context, CallActionReceiver::class.java)
-            acceptCallIntent.action = ACCEPT_CALL
-            val acceptPendingIntent =
-                PendingIntent.getBroadcast(
-                    context,
-                    ACCEPT_CALL_CODE,
-                    acceptCallIntent,
-                    PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
-                )
+            val bubblePendingIntent =
+                PendingIntent.getActivity(context, 5, openAppIntent, PendingIntent.FLAG_MUTABLE)
 
-            val declineCallIntent = Intent(context, CallActionReceiver::class.java)
-            declineCallIntent.action = DECLINE_CALL
-            val declinePendingIntent =
-                PendingIntent.getBroadcast(
-                    context,
-                    DECLINE_CALL_CODE,
-                    declineCallIntent,
-                    PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
-                )
+            val acceptCallIntent = Intent(context, CallActionReceiver::class.java).apply { action = ACCEPT_CALL }
+            val acceptPendingIntent = PendingIntent.getBroadcast(
+                context, ACCEPT_CALL_CODE, acceptCallIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
+            )
 
-            val muteCallIntent = Intent(context, CallActionReceiver::class.java).apply {
-                action = TOGGLE_MUTE
-            }
+            val declineCallIntent = Intent(context, CallActionReceiver::class.java).apply { action = DECLINE_CALL }
+            val declinePendingIntent = PendingIntent.getBroadcast(
+                context, DECLINE_CALL_CODE, declineCallIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
+            )
+
+            val muteCallIntent = Intent(context, CallActionReceiver::class.java).apply { action = TOGGLE_MUTE }
             val mutePendingIntent = PendingIntent.getBroadcast(
-                context,
-                2,
-                muteCallIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                context, 2, muteCallIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             )
 
-            val speakerCallIntent = Intent(context, CallActionReceiver::class.java).apply {
-                action = TOGGLE_SPEAKER
-            }
+            val speakerCallIntent = Intent(context, CallActionReceiver::class.java).apply { action = TOGGLE_SPEAKER }
             val speakerPendingIntent = PendingIntent.getBroadcast(
-                context,
-                3,
-                speakerCallIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                context, 3, speakerCallIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             )
 
-            val deleteCallIntent = Intent(context, CallActionReceiver::class.java).apply {
-                action = DISMISS_CALL_NOTIFICATION
-            }
+            val deleteCallIntent = Intent(context, CallActionReceiver::class.java).apply { action = DISMISS_CALL_NOTIFICATION }
             val deletePendingIntent = PendingIntent.getBroadcast(
-                context,
-                4,
-                deleteCallIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                context, 4, deleteCallIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             )
 
             var callerName = callContact.name.ifEmpty { context.getString(R.string.unknown_caller) }
-            if (callContact.numberLabel.isNotEmpty()) {
-                callerName += " - ${callContact.numberLabel}"
-            }
+            if (callContact.numberLabel.isNotEmpty()) callerName += " - ${callContact.numberLabel}"
 
             val contentTextId = when (callState) {
                 Call.STATE_RINGING -> R.string.is_calling
@@ -118,13 +98,12 @@ class CallNotificationManager(private val context: Context) {
             val collapsedView = RemoteViews(context.packageName, R.layout.call_notification).apply {
                 setText(R.id.notification_caller_name, callerName)
                 setText(R.id.notification_call_status, context.getString(contentTextId))
-                
                 setVisibleIf(R.id.notification_accept_call, callState == Call.STATE_RINGING)
 
                 val isCallActiveOrDialing = callState == Call.STATE_ACTIVE ||
-                                           callState == Call.STATE_DIALING ||
-                                           callState == Call.STATE_CONNECTING ||
-                                           callState == Call.STATE_HOLDING
+                    callState == Call.STATE_DIALING ||
+                    callState == Call.STATE_CONNECTING ||
+                    callState == Call.STATE_HOLDING
                 setVisibleIf(R.id.notification_toggle_mute, isCallActiveOrDialing)
                 setVisibleIf(R.id.notification_toggle_speaker, isCallActiveOrDialing)
 
@@ -163,11 +142,7 @@ class CallNotificationManager(private val context: Context) {
             }
 
             val isOutgoing = CallManager.getPrimaryCall()?.isOutgoing() == true
-            val iconId = if (isOutgoing) {
-                R.drawable.ic_call_made_notification
-            } else {
-                R.drawable.ic_call_received_notification
-            }
+            val iconId = if (isOutgoing) R.drawable.ic_call_made_notification else R.drawable.ic_call_received_notification
 
             val builder = Notification.Builder(context, channelId)
                 .setSmallIcon(iconId)
@@ -181,12 +156,26 @@ class CallNotificationManager(private val context: Context) {
                 .setStyle(Notification.DecoratedCustomViewStyle())
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
 
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                try {
+                    val bubbleMeta = Notification.BubbleMetadata.Builder(
+                        bubblePendingIntent,
+                        Icon.createWithResource(context, iconId)
+                    )
+                        .setAutoExpandBubble(false)
+                        .setSuppressNotification(false)
+                        .build()
+                    builder.setBubbleMetadata(bubbleMeta)
+                } catch (_: Throwable) {
+                }
+            }
+
             if (isHighPriority) {
                 builder.setFullScreenIntent(openAppPendingIntent, true)
             }
 
             val notification = builder.build()
-            // it's rare but possible for the call state to change by now
+
             if (CallManager.getState() == callState) {
                 val service = context as? Service
                 if (service != null) {
@@ -216,6 +205,9 @@ class CallNotificationManager(private val context: Context) {
         val importance = if (isHighPriority) IMPORTANCE_HIGH else IMPORTANCE_DEFAULT
         NotificationChannel(channelId, name, importance).apply {
             setSound(null, null)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                setAllowBubbles(true)
+            }
             notificationManager.createNotificationChannel(this)
         }
     }
