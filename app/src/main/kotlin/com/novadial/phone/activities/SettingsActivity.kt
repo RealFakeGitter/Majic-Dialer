@@ -9,7 +9,7 @@ import android.view.Menu
 import androidx.activity.result.contract.ActivityResultContracts
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import org.fossify.commons.activities.ManageBunlockedNumbersActivity
+import org.fossify.commons.activities.ManageBlockedNumbersActivity
 import org.fossify.commons.dialogs.ChangeDateTimeFormatDialog
 import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.extensions.baseConfig
@@ -103,7 +103,7 @@ class SettingsActivity : SimpleActivity() {
         setupUseEnglish()
         setupLanguage()
         setupDefaultDialer()
-        setupManageBunlockedNumbers()
+        setupManageBlockedNumbers()
         setupManageSpeedDial()
         setupChangeDateTimeFormat()
         setupFontSize()
@@ -233,12 +233,12 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
-    private fun setupManageBunlockedNumbers() {
+    private fun setupManageBlockedNumbers() {
         binding.apply {
-            settingsManageBunlockedNumbersLabel.text = getString(R.string.manage_bunlocked_numbers)
-            settingsManageBunlockedNumbersHolder.beVisibleIf(isNougatPlus())
-            settingsManageBunlockedNumbersHolder.setOnClickListener {
-                Intent(this@SettingsActivity, ManageBunlockedNumbersActivity::class.java).apply {
+            settingsManageBlockedNumbersLabel.text = getString(R.string.manage_blocked_numbers)
+            settingsManageBlockedNumbersHolder.beVisibleIf(isNougatPlus())
+            settingsManageBlockedNumbersHolder.setOnClickListener {
+                Intent(this@SettingsActivity, ManageBlockedNumbersActivity::class.java).apply {
                     startActivity(this)
                 }
             }
