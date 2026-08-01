@@ -1,5 +1,6 @@
 package com.novadial.phone.activities
 
+import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.app.KeyguardManager
 import android.content.Context
@@ -20,11 +21,15 @@ import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.ImageView
+import androidx.activity.viewModels
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.os.postDelayed
 import androidx.core.view.children
 import androidx.core.view.setPadding
 import androidx.core.view.updatePadding
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import org.fossify.commons.extensions.*
@@ -37,6 +42,8 @@ import com.novadial.phone.extensions.*
 import com.novadial.phone.helpers.*
 import com.novadial.phone.models.AudioRoute
 import com.novadial.phone.models.CallContact
+import com.novadial.phone.models.CallScreenViewModel
+import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 
@@ -50,6 +57,11 @@ class CallActivity : SimpleActivity() {
     }
 
     private val binding by viewBinding(ActivityCallBinding::inflate)
+
+    // ── Audio + ViewModel ────────────────────────────────────────────────────
+    private val callAudioManager by lazy { CallAudioManager(this) }
+    private val callScreenViewModel: CallScreenViewModel by viewModels()
+    // ────────────────────────────────────────────────────────────────────────
 
     private var isSpeakerOn = false
     private var isMicrophoneOff = false
@@ -87,6 +99,20 @@ class CallActivity : SimpleActivity() {
         addLockScreenFlags()
         CallManager.addListener(callCallback)
         updateCallContactInfo(CallManager.getPrimaryCall())
+
+        // Observe the ViewModel's second-call event to trigger the call-waiting tone.
+        // Using repeatOnLifecycle(STARTED) ensures collection is paused when the
+        // Activity is in the background and resumed when it comes to the foreground.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                callScreenViewModel.secondCallEvent.collect { hasSecondCall ->
+                    if (hasSecondCall) {
+                        callAudioManager.startCallWaitingTone()
+                        callScreenViewModel.consumeSecondCallEvent()
+                    }
+                }
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -102,6 +128,7 @@ class CallActivity : SimpleActivity() {
     override fun onDestroy() {
         super.onDestroy()
         CallManager.removeListener(callCallback)
+        callAudioManager.release()
         disableProximitySensor()
 
         if (screenOnWakeLock?.isHeld == true) {
@@ -172,18 +199,22 @@ class CallActivity : SimpleActivity() {
         }
 
         callSwap.setOnClickListener {
+            callAudioManager.playSwapHaptic()
             CallManager.swap()
         }
 
         callMerge.setOnClickListener {
+            callAudioManager.playMergeHaptic()
             CallManager.merge()
         }
 
         onHoldSwap.setOnClickListener {
+            callAudioManager.playSwapHaptic()
             CallManager.swap()
         }
 
         onHoldMerge.setOnClickListener {
+            callAudioManager.playMergeHaptic()
             CallManager.merge()
         }
 
@@ -192,19 +223,26 @@ class CallActivity : SimpleActivity() {
         }
 
         callWaitingAccept.setOnClickListener {
+            callAudioManager.stopCallWaitingTone()
             CallManager.acceptRingingCall()
         }
 
         callWaitingDecline.setOnClickListener {
+            callAudioManager.stopCallWaitingTone()
             CallManager.rejectRingingCall()
         }
 
-        callWaitingDecline.background.applyColorFilter(getColor(R.color.md_red_600))
-        callWaitingDecline.applyColorFilter(android.graphics.Color.WHITE)
-        callWaitingAccept.background.applyColorFilter(getColor(R.color.md_green_600))
-        callWaitingAccept.applyColorFilter(android.graphics.Color.WHITE)
-        callWaitingHolder.background.applyColorFilter(getProperBackgroundColor().lightenColor(2))
-        callWaitingIcon.applyColorFilter(getProperTextColor())
+        // Tint the call-waiting accept/reject buttons with semantic colors so they
+        // are immediately distinguishable without relying on icon shape alone.
+        binding.callWaitingDecline.background.applyColorFilter(getColor(R.color.call_reject_tint))
+        binding.callWaitingDecline.applyColorFilter(android.graphics.Color.WHITE)
+        binding.callWaitingAccept.background.applyColorFilter(getColor(R.color.call_accept_tint))
+        binding.callWaitingAccept.applyColorFilter(android.graphics.Color.WHITE)
+
+        // Card background and icon are already styled via StyleIncomingCallPopup / drawable;
+        // phone icon inherits the text colour via applyColorFilter below.
+        binding.callWaitingHolder.background.applyColorFilter(getProperBackgroundColor().lightenColor(2))
+        binding.callWaitingIcon.applyColorFilter(getProperTextColor())
 
         callManage.setOnClickListener {
             startActivity(Intent(this@CallActivity, ConferenceActivity::class.java))
@@ -718,8 +756,9 @@ class CallActivity : SimpleActivity() {
             // bottom. incomingCallHolder (full-screen swipe UI) must NOT be shown.
             ringingCall != null && activeOrHeldCall != null -> {
                 binding.incomingCallHolder.beGone()
-                // Show the banner synchronously; the async callback only fills the name.
-                binding.callWaitingHolder.beVisible()
+                // Show the banner with slide-up animation; the async callback only fills the name.
+                showCallWaitingBanner()
+                animateCallWaitingDim(dim = true)
                 updateCallWaitingState(ringingCall)
 
                 when (phoneState) {
@@ -739,7 +778,8 @@ class CallActivity : SimpleActivity() {
 
             // ── Scenario A first incoming / outgoing: only ringing call, no active call ──
             ringingCall != null -> {
-                binding.callWaitingHolder.beGone()
+                hideCallWaitingBanner()
+                animateCallWaitingDim(dim = false)
                 binding.incomingCallHolder.beVisible()
                 updateCallState(ringingCall)
                 updateCallContactInfo(ringingCall)
@@ -749,7 +789,8 @@ class CallActivity : SimpleActivity() {
             // ── Scenarios E/F/G: no ringing call at all ──
             else -> {
                 binding.incomingCallHolder.beGone()
-                binding.callWaitingHolder.beGone()
+                hideCallWaitingBanner()
+                animateCallWaitingDim(dim = false)
                 when (phoneState) {
                     is SingleCall -> {
                         updateCallState(phoneState.call)
@@ -857,6 +898,53 @@ class CallActivity : SimpleActivity() {
         binding.callEnd.beVisible()
     }
 
+    // ── Animation helpers ──────────────────────────────────────────────────
+
+    /**
+     * Shows the call-waiting banner with a slide-up + fade-in animation.
+     * Safe to call repeatedly — animation is skipped if already visible.
+     */
+    private fun showCallWaitingBanner() {
+        val banner = binding.callWaitingHolder
+        if (banner.visibility == android.view.View.VISIBLE) return
+        banner.clearAnimation()
+        val anim = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.slide_up_incoming)
+        banner.startAnimation(anim)
+        banner.beVisible()
+    }
+
+    /**
+     * Hides the call-waiting banner with a fade-out animation.
+     * Safe to call repeatedly — no-op if already gone.
+     */
+    private fun hideCallWaitingBanner() {
+        val banner = binding.callWaitingHolder
+        if (banner.visibility != android.view.View.VISIBLE) return
+        val anim = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.fade_out_call)
+        anim.setAnimationListener(object : android.view.animation.Animation.AnimationListener {
+            override fun onAnimationStart(a: android.view.animation.Animation) {}
+            override fun onAnimationRepeat(a: android.view.animation.Animation) {}
+            override fun onAnimationEnd(a: android.view.animation.Animation) { banner.beGone() }
+        })
+        banner.startAnimation(anim)
+    }
+
+    /**
+     * Animates the alpha of [active_call_dim_overlay] between 0 (undimmed) and 1 (dimmed).
+     * Duration: 200ms. This scrim sits over the avatar / name / status labels and
+     * visually de-emphasises the active call while the incoming call banner is visible.
+     */
+    private fun animateCallWaitingDim(dim: Boolean) {
+        val overlay = binding.root.findViewById<android.view.View>(R.id.active_call_dim_overlay)
+            ?: return
+        val targetAlpha = if (dim) 1f else 0f
+        if (overlay.alpha == targetAlpha) return
+        ObjectAnimator.ofFloat(overlay, "alpha", overlay.alpha, targetAlpha).apply {
+            duration = 200
+            start()
+        }
+    }
+
     private fun callRinging() {
         binding.incomingCallHolder.beVisible()
     }
@@ -934,6 +1022,12 @@ class CallActivity : SimpleActivity() {
         override fun onPrimaryCallChanged(call: Call) {
             callDurationHandler.removeCallbacks(updateCallDurationTask)
             updateCallContactInfo(call)
+            updateState()
+        }
+
+        override fun onSecondCallArrived(call: Call) {
+            // The ViewModel's secondCallEvent handles the tone via StateFlow collection.
+            // Here we just ensure the UI updates synchronously for the incoming banner.
             updateState()
         }
     }

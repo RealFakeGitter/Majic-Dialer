@@ -18,4 +18,34 @@
     <!-- keep these 2 values in dp to avoid scaling -->
     <dimen name="dialpad_text_size">28dp</dimen>
     <dimen name="dialpad_letters_text_size">12dp</dimen>
+
+    <!-- ── Call Screen extras ─────────────────────────────────────────── -->
+    <!-- Avatar sizes for active vs. waiting call -->
+    <dimen name="call_avatar_size_large">80dp</dimen>
+    <dimen name="call_avatar_size_small">52dp</dimen>
+
+    <!-- Corner radius for call-waiting card (Material 3 ExtraLarge shape) -->
+    <dimen name="call_card_corner_radius">20dp</dimen>
+
+    <!-- Elevation for floating call-waiting banner -->
+    <dimen name="call_waiting_elevation">8dp</dimen>
+
+    <!-- Horizontal margin around the call-waiting banner -->
+    <dimen name="call_waiting_margin">12dp</dimen>
+
+    <!-- Accept / Reject button size inside the call-waiting banner -->
+    <dimen name="call_waiting_action_btn_size">44dp</dimen>
+
+    <!-- Padding inside the call-waiting banner card -->
+    <dimen name="call_waiting_padding">14dp</dimen>
+
+    <!-- Label text size for "Incoming Call" badge -->
+    <dimen name="call_waiting_badge_text_size">11sp</dimen>
+
+    <!-- Status text size inside the on-hold bar -->
+    <dimen name="call_on_hold_text_size">14sp</dimen>
+
+    <!-- Swap / Merge icon button size in the on-hold bar -->
+    <dimen name="call_hold_action_btn_size">36dp</dimen>
 </resources>
+

@@ -8,9 +8,11 @@ import org.fossify.commons.extensions.hasPermission
 import org.fossify.commons.helpers.PERMISSION_POST_NOTIFICATIONS
 import com.novadial.phone.activities.CallActivity
 import com.novadial.phone.extensions.config
+import com.novadial.phone.extensions.getStateCompat
 import com.novadial.phone.extensions.isOutgoing
 import com.novadial.phone.extensions.keyguardManager
 import com.novadial.phone.extensions.powerManager
+import com.novadial.phone.helpers.CallAudioManager
 import com.novadial.phone.helpers.CallManager
 import com.novadial.phone.helpers.CallNotificationManager
 import com.novadial.phone.helpers.NoCall
@@ -22,6 +24,10 @@ import com.novadial.phone.helpers.RecentsHelper
 
 class CallService : InCallService() {
     private val callNotificationManager by lazy { CallNotificationManager(this) }
+
+    // Service-level audio manager ensures the call-waiting tone stops even if
+    // CallActivity is in the background when the ringing call is removed.
+    private val callAudioManager by lazy { CallAudioManager(this) }
 
     override fun onCreate() {
         super.onCreate()
@@ -91,6 +97,13 @@ class CallService : InCallService() {
         super.onCallRemoved(call)
         call.unregisterCallback(callListener)
         RingtoneVolumeHelper.handleCallRemoved(this, call)
+
+        // If the call that was removed was ringing (call-waiting), stop the tone.
+        // This is a safety net: CallActivity also stops it, but may be backgrounded.
+        if (call.getStateCompat() == Call.STATE_RINGING) {
+            callAudioManager.stopCallWaitingTone()
+        }
+
         CallManager.onCallRemoved(call)
         if (CallManager.getPhoneState() == NoCall) {
             CallManager.inCallService = null
@@ -117,6 +130,7 @@ class CallService : InCallService() {
     override fun onDestroy() {
         super.onDestroy()
         callNotificationManager.cancelNotification()
+        callAudioManager.release()
         RingtoneVolumeHelper.restoreVolume(this)
     }
 }

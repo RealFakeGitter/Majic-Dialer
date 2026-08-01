@@ -21,4 +21,31 @@
     <color name="color_secondary">#FFFFFF</color>
     <color name="color_on_secondary">#000000</color>
     <color name="white">#FFFFFF</color>
+
+    <!-- ── Call Screen tokens ────────────────────────────────────────────── -->
+    <!-- Dimming overlay applied to the active-call section when a waiting
+         call arrives. 50 % opaque black scrim. -->
+    <color name="call_active_dim_scrim">#80000000</color>
+
+    <!-- Badge shown on the call-waiting banner: red/warning tone -->
+    <color name="call_incoming_badge_bg">#FFEB3B1A</color>   <!-- amber tint surface -->
+    <color name="call_incoming_badge_text">#FFFF6F00</color> <!-- deep amber -->
+
+    <!-- Accept / Reject button tint colours -->
+    <color name="call_accept_tint">#FF4CAF50</color>   <!-- Material Green 500 -->
+    <color name="call_reject_tint">#FFF44336</color>   <!-- Material Red 500 -->
+
+    <!-- End-call button background -->
+    <color name="call_end_bg">#FFFF5252</color>        <!-- Material Red A200 -->
+    <color name="call_end_icon">#FFFFFFFF</color>
+
+    <!-- Swap / Merge action button background (used in on_hold_status_holder) -->
+    <color name="call_action_swap_bg">#FF1976D2</color>  <!-- Material Blue 700 -->
+    <color name="call_action_merge_bg">#FF7B1FA2</color> <!-- Material Purple 700 -->
+    <color name="call_action_icon">#FFFFFFFF</color>
+
+    <!-- Call-waiting banner stroke / card -->
+    <color name="call_waiting_card_stroke">#33FFFFFF</color>
+    <color name="call_waiting_label_color">#FFFFA726</color> <!-- Orange 400 — "Incoming" label -->
 </resources>
+

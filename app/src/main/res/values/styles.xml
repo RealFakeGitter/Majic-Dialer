@@ -36,4 +36,77 @@
         <item name="android:layout_centerHorizontal">true</item>
     </style>
 
+    <!-- ── Call Screen Styles ─────────────────────────────────────────── -->
+
+    <!--
+        Active-call information block (avatar + name + status labels).
+        Apply to the ConstraintLayout that wraps the caller info section.
+        The Kotlin layer animates the alpha between 1.0 (normal) and 0.5 (dimmed)
+        using ObjectAnimator when a waiting call arrives / is dismissed.
+    -->
+    <style name="StyleActiveCallContainer">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:paddingStart">@dimen/activity_margin</item>
+        <item name="android:paddingEnd">@dimen/activity_margin</item>
+        <item name="android:elevation">0dp</item>
+    </style>
+
+    <!--
+        Floating card for the call-waiting banner.
+        Rendered as a ConstraintLayout with call_waiting_card_bg background +
+        elevation so it visually "lifts" over the active call section.
+    -->
+    <style name="StyleIncomingCallPopup">
+        <item name="android:background">@drawable/call_waiting_card_bg</item>
+        <item name="android:elevation">@dimen/call_waiting_elevation</item>
+        <item name="android:padding">@dimen/call_waiting_padding</item>
+        <item name="android:layout_marginStart">@dimen/call_waiting_margin</item>
+        <item name="android:layout_marginEnd">@dimen/call_waiting_margin</item>
+    </style>
+
+    <!--
+        Circular icon button used for Mute, Speaker, Dialpad, Hold, Add, etc.
+        The background is overridden by Kotlin's toggleButtonColor() so we only
+        set the shape/ripple defaults here.
+    -->
+    <style name="StyleCallControlButton">
+        <item name="android:background">@drawable/circle_background</item>
+        <item name="android:padding">@dimen/activity_margin</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <!--
+        Primary text label on the call screen (caller name, status).
+        Bold, 16sp, uses the theme's primary text colour.
+    -->
+    <style name="StyleCallLabel">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+    </style>
+
+    <!--
+        Call duration / timer: monospace so digits don't jitter as they change.
+    -->
+    <style name="StyleCallDuration">
+        <item name="android:textSize">@dimen/call_status_text_size</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
+        <item name="android:alpha">0.7</item>
+    </style>
+
+    <!--
+        "Incoming Call" badge label inside the call-waiting banner.
+        Orange / amber color to draw attention without using red (reserved for reject).
+    -->
+    <style name="StyleIncomingCallBadge">
+        <item name="android:textSize">@dimen/call_waiting_badge_text_size</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textColor">@color/call_waiting_label_color</item>
+    </style>
+
 </resources>
+

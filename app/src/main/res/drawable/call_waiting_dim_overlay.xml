@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Semi-transparent scrim used to dim the active call section when a second
+    (call-waiting) call arrives. Applied as a foreground on caller_avatar,
+    caller_name_label, etc. via animateCallWaitingDim() in CallActivity.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#80000000" />
+</shape>

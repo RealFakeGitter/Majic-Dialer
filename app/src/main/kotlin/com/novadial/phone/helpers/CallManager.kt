@@ -38,6 +38,15 @@ class CallManager {
                     updateState()
                 }
             })
+
+            // Notify listeners that a second (or later) call has arrived.
+            // This is used to trigger the call-waiting tone in CallAudioManager.
+            if (calls.size > 1) {
+                for (listener in listeners) {
+                    listener.onSecondCallArrived(call)
+                }
+            }
+
             updateState()
         }
 
@@ -197,12 +206,15 @@ class CallManager {
         }
 
         fun merge() {
-            val conferenceableCalls = call!!.conferenceableCalls
+            // Use getPrimaryCall() instead of the cached `call` field to avoid a
+            // null-pointer crash when the field hasn't been updated yet.
+            val primaryCall = getPrimaryCall() ?: return
+            val conferenceableCalls = primaryCall.conferenceableCalls
             if (conferenceableCalls.isNotEmpty()) {
-                call!!.conference(conferenceableCalls.first())
+                primaryCall.conference(conferenceableCalls.first())
             } else {
-                if (call!!.hasCapability(Call.Details.CAPABILITY_MERGE_CONFERENCE)) {
-                    call!!.mergeConference()
+                if (primaryCall.hasCapability(Call.Details.CAPABILITY_MERGE_CONFERENCE)) {
+                    primaryCall.mergeConference()
                 }
             }
         }
@@ -230,6 +242,13 @@ interface CallManagerListener {
     fun onStateChanged()
     fun onAudioStateChanged(audioState: AudioRoute)
     fun onPrimaryCallChanged(call: Call)
+
+    /**
+     * Called when a second (or later) call is added while at least one call is already
+     * in the list. Use this to trigger call-waiting audio feedback.
+     * Default implementation is a no-op so existing listeners don't need to change.
+     */
+    fun onSecondCallArrived(call: Call) {}
 }
 
 sealed class PhoneState
