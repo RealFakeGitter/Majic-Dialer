@@ -710,44 +710,68 @@ class CallActivity : SimpleActivity() {
     private fun updateState() {
         val phoneState = CallManager.getPhoneState()
         val ringingCall = CallManager.getRingingCall()
-        val primaryCall = CallManager.getPrimaryCall()
+        val activeOrHeldCall = CallManager.getActiveCall() ?: CallManager.getHeldCall()
 
-        if (ringingCall != null && primaryCall != null && ringingCall != primaryCall) {
-            binding.incomingCallHolder.beGone()
-            updateCallWaitingState(ringingCall)
-            if (phoneState is SingleCall) {
-                updateCallState(phoneState.call)
-                updateCallContactInfo(phoneState.call)
-                updateCallOnHoldState(null)
-            } else if (phoneState is TwoCalls) {
-                updateCallState(phoneState.active)
-                updateCallContactInfo(phoneState.active)
-                updateCallOnHoldState(phoneState.onHold)
+        when {
+            // ── Scenario B/C/D: A waiting call arrived while a call is active/held ──
+            // The main panel stays on the active call. The waiting banner overlays the
+            // bottom. incomingCallHolder (full-screen swipe UI) must NOT be shown.
+            ringingCall != null && activeOrHeldCall != null -> {
+                binding.incomingCallHolder.beGone()
+                // Show the banner synchronously; the async callback only fills the name.
+                binding.callWaitingHolder.beVisible()
+                updateCallWaitingState(ringingCall)
+
+                when (phoneState) {
+                    is TwoCalls -> {
+                        updateCallState(phoneState.active)
+                        updateCallContactInfo(phoneState.active)
+                        updateCallOnHoldState(phoneState.onHold)
+                    }
+                    is SingleCall -> {
+                        updateCallState(phoneState.call)
+                        updateCallContactInfo(phoneState.call)
+                        updateCallOnHoldState(null)
+                    }
+                    else -> Unit
+                }
             }
-        } else if (ringingCall != null && (primaryCall == null || ringingCall == primaryCall)) {
-            binding.callWaitingHolder.beGone()
-            updateCallState(ringingCall)
-            updateCallContactInfo(ringingCall)
-            updateCallOnHoldState(null)
-        } else {
-            binding.incomingCallHolder.beGone()
-            binding.callWaitingHolder.beGone()
-            if (phoneState is SingleCall) {
-                updateCallState(phoneState.call)
-                updateCallContactInfo(phoneState.call)
+
+            // ── Scenario A first incoming / outgoing: only ringing call, no active call ──
+            ringingCall != null -> {
+                binding.callWaitingHolder.beGone()
+                binding.incomingCallHolder.beVisible()
+                updateCallState(ringingCall)
+                updateCallContactInfo(ringingCall)
                 updateCallOnHoldState(null)
-                val state = phoneState.call.getStateCompat()
-                val isSingleCallActionsEnabled = !isCallEnded && (state == Call.STATE_ACTIVE || state == Call.STATE_DISCONNECTED
-                    || state == Call.STATE_DISCONNECTING || state == Call.STATE_HOLDING)
-                setActionButtonEnabled(binding.callToggleHold, isSingleCallActionsEnabled)
-                setActionButtonEnabled(binding.callAdd, isSingleCallActionsEnabled)
-            } else if (phoneState is TwoCalls) {
-                updateCallState(phoneState.active)
-                updateCallContactInfo(phoneState.active)
-                updateCallOnHoldState(phoneState.onHold)
-            } else if (phoneState is NoCall) {
-                endCall()
-                return
+            }
+
+            // ── Scenarios E/F/G: no ringing call at all ──
+            else -> {
+                binding.incomingCallHolder.beGone()
+                binding.callWaitingHolder.beGone()
+                when (phoneState) {
+                    is SingleCall -> {
+                        updateCallState(phoneState.call)
+                        updateCallContactInfo(phoneState.call)
+                        updateCallOnHoldState(null)
+                        val state = phoneState.call.getStateCompat()
+                        val isSingleCallActionsEnabled = !isCallEnded &&
+                            (state == Call.STATE_ACTIVE || state == Call.STATE_DISCONNECTED
+                                || state == Call.STATE_DISCONNECTING || state == Call.STATE_HOLDING)
+                        setActionButtonEnabled(binding.callToggleHold, isSingleCallActionsEnabled)
+                        setActionButtonEnabled(binding.callAdd, isSingleCallActionsEnabled)
+                    }
+                    is TwoCalls -> {
+                        updateCallState(phoneState.active)
+                        updateCallContactInfo(phoneState.active)
+                        updateCallOnHoldState(phoneState.onHold)
+                    }
+                    is NoCall -> {
+                        endCall()
+                        return
+                    }
+                }
             }
         }
 
@@ -780,6 +804,10 @@ class CallActivity : SimpleActivity() {
     }
 
     private fun updateCallWaitingState(ringingCall: Call) {
+        // Visibility is already set synchronously by updateState().
+        // This callback only updates the caller-name text to avoid a race where
+        // an async beVisible() call could show the banner after the ringing call
+        // has already been answered or declined.
         getCallContact(applicationContext, ringingCall) { contact ->
             if (ringingCall.getStateCompat() != Call.STATE_RINGING) {
                 return@getCallContact
@@ -792,8 +820,8 @@ class CallActivity : SimpleActivity() {
                     } else {
                         name
                     }
-                    callWaitingHolder.beVisible()
-                    incomingCallHolder.beGone()
+                    // Do NOT call callWaitingHolder.beVisible() here — that is
+                    // done synchronously in updateState() to prevent race conditions.
                 }
             }
         }
@@ -801,7 +829,12 @@ class CallActivity : SimpleActivity() {
 
     private fun updateCallContactInfo(call: Call?) {
         getCallContact(applicationContext, call) { contact ->
-            if (call != CallManager.getPrimaryCall() && call != CallManager.getRingingCall()) {
+            // Accept the call if it matches either the primary slot or the ringing slot.
+            // This covers the two-call scenario where the primary call is the active/held
+            // call and the ringing call is a separate waiting call.
+            val primaryCall = CallManager.getPrimaryCall()
+            val ringingCall = CallManager.getRingingCall()
+            if (call != primaryCall && call != ringingCall) {
                 return@getCallContact
             }
             callContact = contact

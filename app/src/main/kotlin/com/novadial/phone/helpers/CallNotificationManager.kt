@@ -37,12 +37,18 @@ class CallNotificationManager(private val context: Context) {
 
     @SuppressLint("NewApi")
     fun setupNotification(lowPriority: Boolean = false) {
+        // Always target the active/held call for the notification so the ongoing-call
+        // info (name, mute, speaker) is always visible. A waiting/ringing call is only
+        // shown in the notification when there is no active call at all.
+        val activeOrHeldCall = CallManager.getActiveCall() ?: CallManager.getHeldCall()
         val ringingCall = CallManager.getRingingCall()
-        val targetCall = ringingCall ?: CallManager.getPrimaryCall()
+        val targetCall = activeOrHeldCall ?: ringingCall ?: CallManager.getPrimaryCall()
         getCallContact(context.applicationContext, targetCall) { callContact ->
             val callContactAvatar = callContactAvatarHelper.getCallContactAvatar(callContact)
             val callState = targetCall?.getStateCompat() ?: CallManager.getState()
-            val isHighPriority = callState == Call.STATE_RINGING && !lowPriority
+            // Suppress FSI when there is already an active call (call-waiting scenario).
+            // The in-app banner inside CallActivity handles the waiting-call UI.
+            val isHighPriority = callState == Call.STATE_RINGING && activeOrHeldCall == null && !lowPriority
             val channelId =
                 if (isHighPriority) "simple_dialer_call_high_priority" else "simple_dialer_call"
             createNotificationChannel(isHighPriority, channelId)

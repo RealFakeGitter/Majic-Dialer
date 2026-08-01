@@ -98,6 +98,10 @@ class CallManager {
         }
 
         private fun updateState() {
+            // Remove disconnected calls FIRST so they never influence getPrimaryCall()
+            // or any listener callback that reads the calls list.
+            calls.removeAll { it.getStateCompat() == Call.STATE_DISCONNECTED }
+
             val primaryCall = getPrimaryCall()
             var notify = true
             if (primaryCall == null) {
@@ -114,18 +118,17 @@ class CallManager {
                     listener.onStateChanged()
                 }
             }
-
-            // remove all disconnected calls manually in case they are still here
-            calls.removeAll { it.getStateCompat() == Call.STATE_DISCONNECTED }
         }
 
         fun getPrimaryCall(): Call? {
+            // RINGING is intentionally last — a waiting/incoming call must NEVER
+            // displace an already-ACTIVE or HELD call as the primary call.
             return getActiveCall()
                 ?: getConnectingCall()
                 ?: getHeldCall()
-                ?: getRingingCall()
                 ?: calls.find { it.isConference() }
-                ?: calls.firstOrNull()
+                ?: calls.firstOrNull { it.getStateCompat() != Call.STATE_RINGING }
+                ?: getRingingCall()
         }
 
         fun getConferenceCalls(): List<Call> {

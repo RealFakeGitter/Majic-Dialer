@@ -64,10 +64,18 @@ class CallService : InCallService() {
         }
 
         callNotificationManager.setupNotification(lowPriority)
+
+        // Only launch the CallActivity for the very first call (no active/held call yet).
+        // When a second call arrives as call-waiting, the already-open CallActivity
+        // will receive the state change via CallManagerListener and show the
+        // in-call waiting banner — we must NOT replace the active-call UI.
+        val hasExistingCall = CallManager.getActiveCall() != null || CallManager.getHeldCall() != null
         if (
-            lowPriority
-            || !hasPermission(PERMISSION_POST_NOTIFICATIONS)
-            || !canUseFullScreenIntent()
+            !hasExistingCall && (
+                lowPriority
+                || !hasPermission(PERMISSION_POST_NOTIFICATIONS)
+                || !canUseFullScreenIntent()
+            )
         ) {
             try {
                 startActivity(CallActivity.getStartIntent(this))
@@ -83,16 +91,16 @@ class CallService : InCallService() {
         super.onCallRemoved(call)
         call.unregisterCallback(callListener)
         RingtoneVolumeHelper.handleCallRemoved(this, call)
-        val wasPrimaryCall = call == CallManager.getPrimaryCall()
         CallManager.onCallRemoved(call)
         if (CallManager.getPhoneState() == NoCall) {
             CallManager.inCallService = null
             callNotificationManager.cancelNotification()
         } else {
             callNotificationManager.setupNotification()
-            if (wasPrimaryCall) {
-                startActivity(CallActivity.getStartIntent(this))
-            }
+            // The open CallActivity will handle the promotion of the held call
+            // to ACTIVE via its CallManagerListener (onStateChanged / onPrimaryCallChanged).
+            // Do NOT call startActivity() here — it would restart the Activity
+            // and flash an unwanted screen transition.
         }
 
         CallLogWatcher.ensureRegistered(this)
