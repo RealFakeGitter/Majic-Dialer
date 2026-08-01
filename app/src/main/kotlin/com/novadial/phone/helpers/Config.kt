@@ -18,6 +18,8 @@ import java.util.Locale
 class Config(context: Context) : BaseConfig(context) {
     companion object {
         fun newInstance(context: Context) = Config(context)
+
+        private const val ENABLE_CALL_BUBBLES = "enable_call_bubbles"
     }
 
     init {
@@ -66,7 +68,6 @@ class Config(context: Context) : BaseConfig(context) {
             return it.toPhoneAccountHandle()
         }
 
-        // fallback for old unstable keys. should be removed in future versions
         val migratedHandle = prefs.all.keys
             .filterIsInstance<String>()
             .filter { it.startsWith(REMEMBER_SIM_PREFIX) }
@@ -171,4 +172,8 @@ class Config(context: Context) : BaseConfig(context) {
     var isRingtoneVolumeBoosted: Boolean
         get() = prefs.getBoolean(IS_RINGTONE_VOLUME_BOOSTED, false)
         set(isRingtoneVolumeBoosted) = prefs.edit().putBoolean(IS_RINGTONE_VOLUME_BOOSTED, isRingtoneVolumeBoosted).apply()
+
+    var enableCallBubbles: Boolean
+        get() = prefs.getBoolean(ENABLE_CALL_BUBBLES, true)
+        set(value) = prefs.edit().putBoolean(ENABLE_CALL_BUBBLES, value).apply()
 }
