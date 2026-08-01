@@ -24,11 +24,8 @@ jobs:
       - name: Build APK
         run: ./gradlew assembleCoreDebug
 
-      - name: List APKs
-        run: find app/build/outputs/apk -type f
-
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: novadial-core-debug-apk
-          path: app/build/outputs/apk/core/debug/app-core-debug.apk
+          path: app/build/outputs/apk/core/debug/phone-29-core-debug.apk
