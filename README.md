@@ -1,11 +1,13 @@
-# NovaDial
-
 <p align="center">
-  <img src="graphics/icon.webp" width="120" alt="NovaDial Logo" />
+  <img src="fastlane/metadata/android/en-US/images/icon.png" width="160" height="160" alt="NovaDial Icon">
 </p>
-
-NovaDial is a modern Android dialer focused on speed, privacy, AMOLED-friendly design, and a clean calling experience.
-
+<h1 align="center">NovaDial</h1>
+<p align="center">
+  <strong>Call with Speed. Call with Privacy. Call with Style.</strong>
+</p>
+<p align="center">
+  Modern Android dialer focused on speed, privacy, AMOLED-friendly design, and a clean calling experience.
+</p>
 <p align="center">
   <a href="https://f-droid.org/en/packages/com.novadial.phone/">
     <img
@@ -13,17 +15,17 @@ NovaDial is a modern Android dialer focused on speed, privacy, AMOLED-friendly d
       alt="Get it on F-Droid"
       width="220">
   </a>
-
 </p>
-
 <p align="center">
   <a href="https://github.com/dhilipmpms/NovaDial/releases"><img src="https://img.shields.io/github/v/release/dhilipmpms/NovaDial?style=flat-square&color=blue" alt="Latest Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPL--3.0-green.svg?style=flat-square" alt="License"></a>
   <img src="https://img.shields.io/badge/Platform-Android-00C853?style=flat-square" alt="Platform">
   <img src="https://img.shields.io/badge/Design-Material--3-blueviolet?style=flat-square" alt="Material 3">
-  <img src="https://img.shields.io/github/downloads/dhilipmpms/NovaDial/total"
+  <img src="https://img.shields.io/github/downloads/dhilipmpms/NovaDial/total" alt="Downloads">
 </p>
 
+
+---
 
 ## About
 
