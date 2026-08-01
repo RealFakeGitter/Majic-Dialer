@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="enable_call_bubbles">Enable call bubbles</string>
     <string name="app_launcher_name">NovaDial</string>
     <string name="default_phone_app_prompt">Please make this app the default Phone app</string>
     <string name="allow_displaying_over_other_apps">Please allow displaying over other apps for reliable behaviour</string>
@@ -93,7 +94,7 @@
     <string name="open_dialpad_by_default">Open the dialpad by default when the app opens</string>
     <string name="disable_proximity_sensor">Disable proximity sensor during calls</string>
     <string name="disable_swipe_to_answer">Replace swiping at responding to incoming calls with clicking</string>
-    <string name="show_incoming_calls_full_screen">Always display incoming calls on full screen</string>
+    <string name="show_incoming_calls_full_screen">Always display incoming calls full screen</string>
     <string name="max_ringtone_volume_incoming">Maximum ringtone volume during incoming calls</string>
     <string name="max_ringtone_volume_incoming_description">When enabled, NovaDial temporarily increases ringtone volume to maximum during incoming calls and restores your previous ringtone volume after the call ends.</string>
     <string name="hide_dialpad_numbers">Hide dialpad numbers</string>
