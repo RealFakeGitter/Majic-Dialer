@@ -8,13 +8,17 @@ import org.fossify.commons.extensions.hasPermission
 import org.fossify.commons.helpers.PERMISSION_POST_NOTIFICATIONS
 import com.novadial.phone.activities.CallActivity
 import com.novadial.phone.extensions.config
+import com.novadial.phone.extensions.getStateCompat
 import com.novadial.phone.extensions.isOutgoing
 import com.novadial.phone.extensions.keyguardManager
 import com.novadial.phone.extensions.powerManager
+import com.novadial.phone.helpers.CallAudioManager
 import com.novadial.phone.helpers.CallManager
+import com.novadial.phone.helpers.CallManagerListener
 import com.novadial.phone.helpers.CallNotificationManager
 import com.novadial.phone.helpers.NoCall
 import com.novadial.phone.helpers.RingtoneVolumeHelper
+import com.novadial.phone.models.AudioRoute
 import com.novadial.phone.models.Events
 import org.greenrobot.eventbus.EventBus
 import com.novadial.phone.helpers.CallLogWatcher
@@ -23,19 +27,43 @@ import com.novadial.phone.helpers.RecentsHelper
 class CallService : InCallService() {
     private val callNotificationManager by lazy { CallNotificationManager(this) }
 
+    // Service-level audio manager ensures the call-waiting tone stops even if
+    // CallActivity is in the background when the ringing call is removed.
+    private val callAudioManager by lazy { CallAudioManager(this) }
+
     override fun onCreate() {
         super.onCreate()
         CallLogWatcher.ensureRegistered(this)
+        CallManager.addListener(callManagerListener)
     }
 
+    // CallManagerListener: drives notification updates from CallManager's post-update
+    // state, ensuring the notification is always consistent with the call list.
+    private val callManagerListener = object : CallManagerListener {
+        override fun onStateChanged() {
+            callNotificationManager.setupNotification()
+        }
+
+        override fun onAudioStateChanged(audioState: AudioRoute) {
+            // handled directly in onCallAudioStateChanged() — no-op here to avoid double update
+        }
+
+        override fun onPrimaryCallChanged(call: Call) {
+            callNotificationManager.setupNotification()
+        }
+
+        override fun onRingingCallEnded() {
+            callNotificationManager.setupNotification()
+        }
+    }
+
+    // Per-call Call.Callback: handles only ringtone volume changes.
+    // Notification updates are driven by callManagerListener (above) which fires
+    // after CallManager has finished updating its call list — eliminating the race
+    // where setupNotification() would fire before the new call was in CallManager.
     private val callListener = object : Call.Callback() {
         override fun onStateChanged(call: Call, state: Int) {
             super.onStateChanged(call, state)
-            if (state == Call.STATE_DISCONNECTED || state == Call.STATE_DISCONNECTING) {
-                callNotificationManager.cancelNotification()
-            } else {
-                callNotificationManager.setupNotification()
-            }
             RingtoneVolumeHelper.handleCallStateChanged(this@CallService, call)
         }
     }
@@ -60,10 +88,18 @@ class CallService : InCallService() {
         }
 
         callNotificationManager.setupNotification(lowPriority)
+
+        // Only launch the CallActivity for the very first call (no active/held call yet).
+        // When a second call arrives as call-waiting, the already-open CallActivity
+        // will receive the state change via CallManagerListener and show the
+        // in-call waiting banner — we must NOT replace the active-call UI.
+        val hasExistingCall = CallManager.getActiveCall() != null || CallManager.getHeldCall() != null
         if (
-            lowPriority
-            || !hasPermission(PERMISSION_POST_NOTIFICATIONS)
-            || !canUseFullScreenIntent()
+            !hasExistingCall && (
+                lowPriority
+                || !hasPermission(PERMISSION_POST_NOTIFICATIONS)
+                || !canUseFullScreenIntent()
+            )
         ) {
             try {
                 startActivity(CallActivity.getStartIntent(this))
@@ -79,16 +115,23 @@ class CallService : InCallService() {
         super.onCallRemoved(call)
         call.unregisterCallback(callListener)
         RingtoneVolumeHelper.handleCallRemoved(this, call)
-        val wasPrimaryCall = call == CallManager.getPrimaryCall()
+
+        // If the call that was removed was ringing (call-waiting), stop the tone.
+        // This is a safety net: CallActivity also stops it, but may be backgrounded.
+        if (call.getStateCompat() == Call.STATE_RINGING) {
+            callAudioManager.stopCallWaitingTone()
+        }
+
         CallManager.onCallRemoved(call)
         if (CallManager.getPhoneState() == NoCall) {
             CallManager.inCallService = null
             callNotificationManager.cancelNotification()
         } else {
             callNotificationManager.setupNotification()
-            if (wasPrimaryCall) {
-                startActivity(CallActivity.getStartIntent(this))
-            }
+            // The open CallActivity will handle the promotion of the held call
+            // to ACTIVE via its CallManagerListener (onStateChanged / onPrimaryCallChanged).
+            // Do NOT call startActivity() here — it would restart the Activity
+            // and flash an unwanted screen transition.
         }
 
         CallLogWatcher.ensureRegistered(this)
@@ -104,7 +147,9 @@ class CallService : InCallService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        CallManager.removeListener(callManagerListener)
         callNotificationManager.cancelNotification()
+        callAudioManager.release()
         RingtoneVolumeHelper.restoreVolume(this)
     }
 }

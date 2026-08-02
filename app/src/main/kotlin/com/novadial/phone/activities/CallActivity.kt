@@ -1,5 +1,6 @@
 package com.novadial.phone.activities
 
+import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.app.KeyguardManager
 import android.content.Context
@@ -20,11 +21,15 @@ import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.ImageView
+import androidx.activity.viewModels
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.os.postDelayed
 import androidx.core.view.children
 import androidx.core.view.setPadding
 import androidx.core.view.updatePadding
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import org.fossify.commons.extensions.*
@@ -37,6 +42,8 @@ import com.novadial.phone.extensions.*
 import com.novadial.phone.helpers.*
 import com.novadial.phone.models.AudioRoute
 import com.novadial.phone.models.CallContact
+import com.novadial.phone.models.CallScreenViewModel
+import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 
@@ -50,6 +57,11 @@ class CallActivity : SimpleActivity() {
     }
 
     private val binding by viewBinding(ActivityCallBinding::inflate)
+
+    // ── Audio + ViewModel ────────────────────────────────────────────────────
+    private val callAudioManager by lazy { CallAudioManager(this) }
+    private val callScreenViewModel: CallScreenViewModel by viewModels()
+    // ────────────────────────────────────────────────────────────────────────
 
     private var isSpeakerOn = false
     private var isMicrophoneOff = false
@@ -87,6 +99,20 @@ class CallActivity : SimpleActivity() {
         addLockScreenFlags()
         CallManager.addListener(callCallback)
         updateCallContactInfo(CallManager.getPrimaryCall())
+
+        // Observe the ViewModel's second-call event to trigger the call-waiting tone.
+        // Using repeatOnLifecycle(STARTED) ensures collection is paused when the
+        // Activity is in the background and resumed when it comes to the foreground.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                callScreenViewModel.secondCallEvent.collect { hasSecondCall ->
+                    if (hasSecondCall) {
+                        callAudioManager.startCallWaitingTone()
+                        callScreenViewModel.consumeSecondCallEvent()
+                    }
+                }
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -102,6 +128,7 @@ class CallActivity : SimpleActivity() {
     override fun onDestroy() {
         super.onDestroy()
         CallManager.removeListener(callCallback)
+        callAudioManager.release()
         disableProximitySensor()
 
         if (screenOnWakeLock?.isHeld == true) {
@@ -172,12 +199,50 @@ class CallActivity : SimpleActivity() {
         }
 
         callSwap.setOnClickListener {
+            callAudioManager.playSwapHaptic()
             CallManager.swap()
         }
 
         callMerge.setOnClickListener {
+            callAudioManager.playMergeHaptic()
             CallManager.merge()
         }
+
+        onHoldSwap.setOnClickListener {
+            callAudioManager.playSwapHaptic()
+            CallManager.swap()
+        }
+
+        onHoldMerge.setOnClickListener {
+            callAudioManager.playMergeHaptic()
+            CallManager.merge()
+        }
+
+        onHoldEnd.setOnClickListener {
+            CallManager.endHeldCall()
+        }
+
+        callWaitingAccept.setOnClickListener {
+            callAudioManager.stopCallWaitingTone()
+            CallManager.acceptRingingCall()
+        }
+
+        callWaitingDecline.setOnClickListener {
+            callAudioManager.stopCallWaitingTone()
+            CallManager.rejectRingingCall()
+        }
+
+        // Tint the call-waiting accept/reject buttons with semantic colors so they
+        // are immediately distinguishable without relying on icon shape alone.
+        binding.callWaitingDecline.background.applyColorFilter(getColor(R.color.call_reject_tint))
+        binding.callWaitingDecline.applyColorFilter(android.graphics.Color.WHITE)
+        binding.callWaitingAccept.background.applyColorFilter(getColor(R.color.call_accept_tint))
+        binding.callWaitingAccept.applyColorFilter(android.graphics.Color.WHITE)
+
+        // Card background and icon are already styled via StyleIncomingCallPopup / drawable;
+        // phone icon inherits the text colour via applyColorFilter below.
+        binding.callWaitingHolder.background.applyColorFilter(getProperBackgroundColor().lightenColor(2))
+        binding.callWaitingIcon.applyColorFilter(getProperTextColor())
 
         callManage.setOnClickListener {
             startActivity(Intent(this@CallActivity, ConferenceActivity::class.java))
@@ -572,20 +637,13 @@ class CallActivity : SimpleActivity() {
         binding.holdStatusLabel.beInvisibleIf(!isOnHold)
     }
 
-    private fun updateOtherPersonsInfo(avatarUri: String?) {
-        if (callContact == null) {
-            return
-        }
-
+    private fun updateOtherPersonsInfo(contact: CallContact, avatarUri: String?) {
         binding.apply {
-            val (name, _, number, numberLabel) = callContact!!
+            val (name, _, number, numberLabel) = contact
             callerNameLabel.text = name.ifEmpty { getString(R.string.unknown_caller) }
             if (number.isNotEmpty() && number != name) {
-                callerNumber.text = number
-
-                if (numberLabel.isNotEmpty()) {
-                    callerNumber.text = "$number - $numberLabel"
-                }
+                callerNumber.beVisible()
+                callerNumber.text = if (numberLabel.isNotEmpty()) "$number - $numberLabel" else number
             } else {
                 callerNumber.beGone()
             }
@@ -667,32 +725,97 @@ class CallActivity : SimpleActivity() {
             else -> 0
         }
 
+        // Merge is enabled only when Android Telecom actually reports conferencing
+        // capability — not simply because the call is ACTIVE.
+        val canMerge = !isCallEnded &&
+            (call.conferenceableCalls.isNotEmpty() ||
+                call.hasCapability(Call.Details.CAPABILITY_MERGE_CONFERENCE))
+
         binding.apply {
             if (statusTextId != 0) {
                 callStatusLabel.text = getString(statusTextId)
+            } else {
+                callStatusLabel.text = ""
             }
 
             callManage.beVisibleIf(!isCallEnded && call.hasCapability(Call.Details.CAPABILITY_MANAGE_CONFERENCE))
             setActionButtonEnabled(callSwap, enabled = !isCallEnded && state == Call.STATE_ACTIVE)
-            setActionButtonEnabled(callMerge, enabled = !isCallEnded && state == Call.STATE_ACTIVE)
+            setActionButtonEnabled(callMerge, enabled = canMerge)
         }
     }
 
     private fun updateState() {
         val phoneState = CallManager.getPhoneState()
-        if (phoneState is SingleCall) {
-            updateCallState(phoneState.call)
-            updateCallOnHoldState(null)
-            val state = phoneState.call.getStateCompat()
-            val isSingleCallActionsEnabled = !isCallEnded && (state == Call.STATE_ACTIVE || state == Call.STATE_DISCONNECTED
-                || state == Call.STATE_DISCONNECTING || state == Call.STATE_HOLDING)
-            setActionButtonEnabled(binding.callToggleHold, isSingleCallActionsEnabled)
-            setActionButtonEnabled(binding.callAdd, isSingleCallActionsEnabled)
-        } else if (phoneState is TwoCalls) {
-            updateCallState(phoneState.active)
-            updateCallOnHoldState(phoneState.onHold)
-        } else if (phoneState is NoCall) {
-            endCall()
+        val ringingCall = CallManager.getRingingCall()
+        val activeOrHeldCall = CallManager.getActiveCall() ?: CallManager.getHeldCall()
+
+        when {
+            // ── Scenario B/C/D: A waiting call arrived while a call is active/held ──
+            // The main panel stays on the active call. The waiting banner overlays the
+            // bottom. incomingCallHolder (full-screen swipe UI) must NOT be shown.
+            ringingCall != null && activeOrHeldCall != null -> {
+                binding.incomingCallHolder.beGone()
+                // Show the banner with slide-up animation; the async callback only fills the name.
+                showCallWaitingBanner()
+                animateCallWaitingDim(dim = true)
+                updateCallWaitingState(ringingCall)
+
+                when (phoneState) {
+                    is TwoCalls -> {
+                        updateCallState(phoneState.active)
+                        updateCallContactInfo(phoneState.active)
+                        updateCallOnHoldState(phoneState.onHold)
+                    }
+                    is SingleCall -> {
+                        updateCallState(phoneState.call)
+                        updateCallContactInfo(phoneState.call)
+                        updateCallOnHoldState(null)
+                    }
+                    else -> Unit
+                }
+            }
+
+            // ── Scenario A first incoming / outgoing: only ringing call, no active call ──
+            ringingCall != null -> {
+                hideCallWaitingBanner()
+                animateCallWaitingDim(dim = false)
+                binding.incomingCallHolder.beVisible()
+                updateCallState(ringingCall)
+                updateCallContactInfo(ringingCall)
+                updateCallOnHoldState(null)
+            }
+
+            // ── Scenarios E/F/G: no ringing call at all ──
+            else -> {
+                binding.incomingCallHolder.beGone()
+                hideCallWaitingBanner()
+                animateCallWaitingDim(dim = false)
+                // Safety net: ensure the waiting tone is always stopped when there is
+                // no ringing call, regardless of how the second call was dismissed.
+                callAudioManager.stopCallWaitingTone()
+                when (phoneState) {
+                    is SingleCall -> {
+                        updateCallState(phoneState.call)
+                        updateCallContactInfo(phoneState.call)
+                        updateCallOnHoldState(null)
+                        val state = phoneState.call.getStateCompat()
+                        val isSingleCallActionsEnabled = !isCallEnded &&
+                            (state == Call.STATE_ACTIVE || state == Call.STATE_DISCONNECTED
+                                || state == Call.STATE_DISCONNECTING || state == Call.STATE_HOLDING)
+                        setActionButtonEnabled(binding.callToggleHold, isSingleCallActionsEnabled)
+                        setActionButtonEnabled(binding.callAdd, isSingleCallActionsEnabled)
+                    }
+                    is TwoCalls -> {
+                        updateCallState(phoneState.active)
+                        updateCallContactInfo(phoneState.active)
+                        updateCallOnHoldState(phoneState.onHold)
+                    }
+                    is NoCall -> {
+                        endCall()
+                        return
+                    }
+                }
+            }
         }
 
         updateCallAudioState(CallManager.getCallAudioRoute())
@@ -702,27 +825,69 @@ class CallActivity : SimpleActivity() {
         val hasCallOnHold = call != null
         if (hasCallOnHold) {
             getCallContact(applicationContext, call) { contact ->
+                if (call != CallManager.getHeldCall()) {
+                    return@getCallContact
+                }
                 runOnUiThread {
-                    binding.onHoldCallerName.text = getContactNameOrNumber(contact)
+                    val name = getContactNameOrNumber(contact)
+                    binding.onHoldCallerName.text = if (contact.number.isNotEmpty() && contact.number != contact.name) {
+                        "$name (${contact.number})"
+                    } else {
+                        name
+                    }
                 }
             }
         }
+        // Merge is only available when Telecom explicitly reports the capability on the
+        // primary call — not simply because two calls exist.
+        val primaryCall = CallManager.getPrimaryCall()
+        val canMerge = hasCallOnHold && (
+            primaryCall?.hasCapability(Call.Details.CAPABILITY_MERGE_CONFERENCE) == true ||
+                primaryCall?.conferenceableCalls?.isNotEmpty() == true
+        )
         binding.apply {
             onHoldStatusHolder.beVisibleIf(hasCallOnHold)
+            onHoldMerge.beVisibleIf(canMerge)
             controlsSingleCall.beVisibleIf(!hasCallOnHold)
             controlsTwoCalls.beVisibleIf(hasCallOnHold)
         }
     }
 
+    private fun updateCallWaitingState(ringingCall: Call) {
+        // Visibility is already set synchronously by updateState().
+        // This callback only updates the caller-name text to avoid a race where
+        // an async beVisible() call could show the banner after the ringing call
+        // has already been answered or declined.
+        getCallContact(applicationContext, ringingCall) { contact ->
+            if (ringingCall.getStateCompat() != Call.STATE_RINGING) {
+                return@getCallContact
+            }
+            runOnUiThread {
+                binding.apply {
+                    val name = getContactNameOrNumber(contact)
+                    callWaitingCallerName.text = if (contact.number.isNotEmpty() && contact.number != contact.name) {
+                        "$name (${contact.number})"
+                    } else {
+                        name
+                    }
+                    // Do NOT call callWaitingHolder.beVisible() here — that is
+                    // done synchronously in updateState() to prevent race conditions.
+                }
+            }
+        }
+    }
+
     private fun updateCallContactInfo(call: Call?) {
-        getCallContact(applicationContext, call) { contact ->
-            if (call != CallManager.getPrimaryCall()) {
+        val targetCall = call ?: CallManager.getPrimaryCall() ?: return
+        getCallContact(applicationContext, targetCall) { contact ->
+            val currentPrimaryCall = CallManager.getPrimaryCall()
+            if (targetCall != currentPrimaryCall) {
                 return@getCallContact
             }
             callContact = contact
-            val avatar = if (!call.isConference()) contact.photoUri else null
+            val avatar = if (!targetCall.isConference()) contact.photoUri else null
             runOnUiThread {
-                updateOtherPersonsInfo(avatar)
+                updateOtherPersonsInfo(contact, avatar)
                 checkCalledSIMCard()
             }
         }
@@ -739,8 +904,61 @@ class CallActivity : SimpleActivity() {
         binding.callEnd.beVisible()
     }
 
+    // ── Animation helpers ──────────────────────────────────────────────────
+
+    /**
+     * Shows the call-waiting banner with a slide-up + fade-in animation.
+     * Safe to call repeatedly — animation is skipped if already visible.
+     */
+    private fun showCallWaitingBanner() {
+        val banner = binding.callWaitingHolder
+        if (banner.visibility == android.view.View.VISIBLE) return
+        banner.clearAnimation()
+        val anim = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.slide_up_incoming)
+        banner.startAnimation(anim)
+        banner.beVisible()
+    }
+
+    /**
+     * Hides the call-waiting banner with a fade-out animation.
+     * Safe to call repeatedly — no-op if already gone.
+     */
+    private fun hideCallWaitingBanner() {
+        val banner = binding.callWaitingHolder
+        if (banner.visibility != android.view.View.VISIBLE) return
+        val anim = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.fade_out_call)
+        anim.setAnimationListener(object : android.view.animation.Animation.AnimationListener {
+            override fun onAnimationStart(a: android.view.animation.Animation) {}
+            override fun onAnimationRepeat(a: android.view.animation.Animation) {}
+            override fun onAnimationEnd(a: android.view.animation.Animation) { banner.beGone() }
+        })
+        banner.startAnimation(anim)
+    }
+
+    /**
+     * Animates the alpha of [active_call_dim_overlay] between 0 (undimmed) and 1 (dimmed).
+     * Duration: 200ms. This scrim sits over the avatar / name / status labels and
+     * visually de-emphasises the active call while the incoming call banner is visible.
+     */
+    private fun animateCallWaitingDim(dim: Boolean) {
+        val overlay = binding.root.findViewById<android.view.View>(R.id.active_call_dim_overlay)
+            ?: return
+        val targetAlpha = if (dim) 1f else 0f
+        if (overlay.alpha == targetAlpha) return
+        ObjectAnimator.ofFloat(overlay, "alpha", overlay.alpha, targetAlpha).apply {
+            duration = 200
+            start()
+        }
+    }
+
     private fun callRinging() {
-        binding.incomingCallHolder.beVisible()
+        // Only show the full-screen incoming call UI when there is NO active or held call.
+        // During call-waiting (active call + second ringing call), updateState() handles
+        // the incoming banner overlay; we must NOT replace the active-call UI here.
+        val hasLiveCall = CallManager.getActiveCall() != null || CallManager.getHeldCall() != null
+        if (!hasLiveCall) {
+            binding.incomingCallHolder.beVisible()
+        }
     }
 
     private fun callStarted() {
@@ -748,6 +966,14 @@ class CallActivity : SimpleActivity() {
         binding.incomingCallHolder.beGone()
         binding.ongoingCallHolder.beVisible()
         binding.callEnd.beVisible()
+        // Clear call-waiting banner/tone only if no ringing call exists anymore.
+        // If a second call is currently ringing while the active call is updated,
+        // do NOT hide the banner or stop the waiting tone.
+        if (CallManager.getRingingCall() == null) {
+            callAudioManager.stopCallWaitingTone()
+            hideCallWaitingBanner()
+            animateCallWaitingDim(dim = false)
+        }
         callDurationHandler.removeCallbacks(updateCallDurationTask)
         callDurationHandler.post(updateCallDurationTask)
     }
@@ -817,6 +1043,24 @@ class CallActivity : SimpleActivity() {
             callDurationHandler.removeCallbacks(updateCallDurationTask)
             updateCallContactInfo(call)
             updateState()
+        }
+
+        override fun onSecondCallArrived(call: Call) {
+            // The ViewModel's secondCallEvent handles the tone via StateFlow collection.
+            // Here we just ensure the UI updates synchronously for the incoming banner.
+            updateState()
+        }
+
+        override fun onRingingCallEnded() {
+            // The ringing call was removed (answered, rejected, or timed out).
+            // Stop the waiting tone and hide the call-waiting banner immediately,
+            // covering paths where the call was dismissed outside the UI buttons
+            // (e.g. via notification action, headset button, or remote hangup).
+            callAudioManager.stopCallWaitingTone()
+            runOnUiThread {
+                hideCallWaitingBanner()
+                animateCallWaitingDim(dim = false)
+            }
         }
     }
 

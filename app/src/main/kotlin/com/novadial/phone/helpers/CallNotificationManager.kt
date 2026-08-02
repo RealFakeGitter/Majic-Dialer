@@ -21,6 +21,7 @@ import com.novadial.phone.R
 import com.novadial.phone.activities.CallActivity
 import com.novadial.phone.receivers.CallActionReceiver
 import com.novadial.phone.extensions.isOutgoing
+import com.novadial.phone.extensions.getStateCompat
 import com.novadial.phone.extensions.config
 import com.novadial.phone.models.AudioRoute
 
@@ -36,10 +37,18 @@ class CallNotificationManager(private val context: Context) {
 
     @SuppressLint("NewApi")
     fun setupNotification(lowPriority: Boolean = false) {
-        getCallContact(context.applicationContext, CallManager.getPrimaryCall()) { callContact ->
+        // Always target the active/held call for the notification so the ongoing-call
+        // info (name, mute, speaker) is always visible. A waiting/ringing call is only
+        // shown in the notification when there is no active call at all.
+        val activeOrHeldCall = CallManager.getActiveCall() ?: CallManager.getHeldCall()
+        val ringingCall = CallManager.getRingingCall()
+        val targetCall = activeOrHeldCall ?: ringingCall ?: CallManager.getPrimaryCall()
+        getCallContact(context.applicationContext, targetCall) { callContact ->
             val callContactAvatar = callContactAvatarHelper.getCallContactAvatar(callContact)
-            val callState = CallManager.getState()
-            val isHighPriority = callState == Call.STATE_RINGING && !lowPriority
+            val callState = targetCall?.getStateCompat() ?: CallManager.getState()
+            // Suppress FSI when there is already an active call (call-waiting scenario).
+            // The in-app banner inside CallActivity handles the waiting-call UI.
+            val isHighPriority = callState == Call.STATE_RINGING && activeOrHeldCall == null && !lowPriority
             val channelId =
                 if (isHighPriority) "simple_dialer_call_high_priority" else "simple_dialer_call"
             createNotificationChannel(isHighPriority, channelId)
@@ -187,7 +196,7 @@ class CallNotificationManager(private val context: Context) {
 
             val notification = builder.build()
             // it's rare but possible for the call state to change by now
-            if (CallManager.getState() == callState) {
+            if (targetCall?.getStateCompat() == callState || CallManager.getState() == callState) {
                 val service = context as? Service
                 if (service != null) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

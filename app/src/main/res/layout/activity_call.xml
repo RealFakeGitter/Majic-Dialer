@@ -51,10 +51,168 @@
             android:text="@string/call_on_hold"
             android:textSize="@dimen/call_status_text_size"
             app:layout_constraintBottom_toBottomOf="@+id/imageView"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/on_hold_swap"
             app:layout_constraintTop_toTopOf="@+id/imageView" />
 
+        <ImageView
+            android:id="@+id/on_hold_swap"
+            android:layout_width="@dimen/normal_icon_size"
+            android:layout_height="@dimen/normal_icon_size"
+            android:layout_marginEnd="@dimen/small_margin"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/call_swap"
+            android:padding="4dp"
+            android:src="@drawable/ic_call_swap_vector"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/on_hold_merge"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/on_hold_merge"
+            android:layout_width="@dimen/normal_icon_size"
+            android:layout_height="@dimen/normal_icon_size"
+            android:layout_marginEnd="@dimen/small_margin"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/call_merge"
+            android:padding="4dp"
+            android:src="@drawable/ic_call_merge_vector"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/on_hold_end"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/on_hold_end"
+            android:layout_width="@dimen/normal_icon_size"
+            android:layout_height="@dimen/normal_icon_size"
+            android:layout_marginEnd="@dimen/normal_margin"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/end_call"
+            android:padding="4dp"
+            android:src="@drawable/ic_call_end"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!--
+        Call-waiting banner — slides up when a second call arrives.
+        Uses the frosted-glass card background + elevation so it visually lifts
+        above the active-call section. The Kotlin layer plays slide_up_incoming
+        when beVisible() is called and fade_out_call when beGone() is called.
+    -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/call_waiting_holder"
+        style="@style/StyleIncomingCallPopup"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/on_hold_status_holder"
+        tools:visibility="visible">
+
+        <!-- Phone icon -->
+        <ImageView
+            android:id="@+id/call_waiting_icon"
+            android:layout_width="@dimen/call_avatar_size_small"
+            android:layout_height="@dimen/call_avatar_size_small"
+            android:contentDescription="@null"
+            android:padding="10dp"
+            android:src="@drawable/ic_phone_vector"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Caller info column: badge + name + status -->
+        <LinearLayout
+            android:id="@+id/call_waiting_info"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="8dp"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/call_waiting_decline"
+            app:layout_constraintStart_toEndOf="@id/call_waiting_icon"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <!-- "INCOMING CALL" amber badge -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="2dp"
+                android:text="@string/label_incoming_call"
+                style="@style/StyleIncomingCallBadge" />
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/call_waiting_caller_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                tools:text="Alice Smith" />
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/call_waiting_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:alpha="0.7"
+                android:text="@string/is_calling"
+                android:textSize="13sp" />
+
+        </LinearLayout>
+
+        <!-- Reject button (red tint) -->
+        <ImageView
+            android:id="@+id/call_waiting_decline"
+            android:layout_width="@dimen/call_waiting_action_btn_size"
+            android:layout_height="@dimen/call_waiting_action_btn_size"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/circle_background"
+            android:contentDescription="@string/label_reject"
+            android:padding="10dp"
+            android:src="@drawable/ic_call_end"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/call_waiting_accept"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Accept button (green tint) -->
+        <ImageView
+            android:id="@+id/call_waiting_accept"
+            android:layout_width="@dimen/call_waiting_action_btn_size"
+            android:layout_height="@dimen/call_waiting_action_btn_size"
+            android:background="@drawable/circle_background"
+            android:contentDescription="@string/label_accept"
+            android:padding="10dp"
+            android:src="@drawable/ic_call_accept"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!--
+        Dim overlay for the active-call info section.
+        Initially alpha=0 (invisible). CallActivity.animateCallWaitingDim()
+        animates this to alpha=1 when a waiting call arrives and back to 0
+        when it is answered/declined. Positioned over the avatar + labels.
+        Pointer-events pass through (clickable=false).
+    -->
+    <View
+        android:id="@+id/active_call_dim_overlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:alpha="0"
+        android:background="@color/call_active_dim_scrim"
+        android:clickable="false"
+        android:focusable="false"
+        app:layout_constraintBottom_toTopOf="@id/ongoing_call_holder"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/call_waiting_holder" />
 
     <ImageView
         android:id="@+id/caller_avatar"
@@ -67,7 +225,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_max="@dimen/caller_avatar_max_size"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/on_hold_status_holder"
+        app:layout_constraintTop_toBottomOf="@id/call_waiting_holder"
         app:layout_constraintVertical_chainStyle="packed"
         tools:background="@drawable/circle_background"
         tools:padding="16dp"

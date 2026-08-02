@@ -83,6 +83,19 @@
     <string name="call_notification_channel">Call status</string>
     <string name="call_notification_channel_high_priority">Call status (high priority)</string>
 
+    <!-- ── Call-waiting / multi-call UI labels ───────────────────────── -->
+    <string name="label_active_call">Active Call</string>
+    <string name="label_incoming_call">Incoming Call</string>
+    <string name="label_on_hold">On Hold</string>
+    <string name="label_swap_calls">Swap</string>
+    <string name="label_merge_calls">Merge</string>
+    <string name="label_conference_active">Conference Call</string>
+    <string name="label_swap_unavailable">Swap not available</string>
+    <string name="label_merge_unavailable">Merge not available</string>
+    <string name="label_accept">Accept</string>
+    <string name="label_reject">Reject</string>
+    <string name="label_end_call">End Call</string>
+
     <!-- Speed dial -->
     <string name="speed_dial">Speed dial</string>
     <string name="manage_speed_dial">Manage speed dial</string>
