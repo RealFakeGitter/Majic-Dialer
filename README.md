@@ -29,6 +29,8 @@
 
 ## About
 
+This is a FORK of Novadial with the only aim to add a floating button to return to call the rest remains the same. NOTE, i likely wont maintian this app I made it for me, if you want updates use NovaDial, i probably will ditch it if the dev includes the one feature :)  
+
 NovaDial is a community-driven fork of Fossify Phone with additional UI improvements, performance optimizations, customization options, and dialer enhancements.
 
 The goal of NovaDial is to provide a modern and feature-rich dialer while remaining lightweight, privacy-friendly, and open source.
