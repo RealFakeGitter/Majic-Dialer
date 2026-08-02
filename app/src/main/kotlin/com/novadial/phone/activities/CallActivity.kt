@@ -51,7 +51,7 @@ class CallActivity : SimpleActivity() {
     companion object {
         fun getStartIntent(context: Context): Intent {
             val openAppIntent = Intent(context, CallActivity::class.java)
-            openAppIntent.flags = Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+            openAppIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
             return openAppIntent
         }
     }
@@ -67,6 +67,8 @@ class CallActivity : SimpleActivity() {
     private var isMicrophoneOff = false
     private var isCallEnded = false
     private var callContact: CallContact? = null
+    private var lastLoadedCallHandle: String? = null
+    private var lastLoadedAvatarUri: String? = null
     private var proximityWakeLock: PowerManager.WakeLock? = null
     private var screenOnWakeLock: PowerManager.WakeLock? = null
     private var callDuration = 0
@@ -117,11 +119,20 @@ class CallActivity : SimpleActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
+        if (CallManager.getPhoneState() == NoCall) {
+            safeFinishAndRemoveTask()
+            return
+        }
         updateState()
     }
 
     override fun onResume() {
         super.onResume()
+        if (CallManager.getPhoneState() == NoCall) {
+            safeFinishAndRemoveTask()
+            return
+        }
         updateState()
     }
 
@@ -655,9 +666,12 @@ class CallActivity : SimpleActivity() {
                     setImageResource(R.drawable.ic_person_vector)
                     setPadding(resources.getDimensionPixelSize(R.dimen.activity_margin))
                     applyColorFilter(bgColor.getContrastColor())
-                    background.applyColorFilter(bgColor)
+                    background?.applyColorFilter(bgColor)
                 } else {
                     if (!isFinishing && !isDestroyed) {
+                        setPadding(0, 0, 0, 0)
+                        clearColorFilter()
+                        background = null
                         Glide.with(this)
                             .load(avatarUri)
                             .apply(RequestOptions.circleCropTransform())
@@ -714,7 +728,11 @@ class CallActivity : SimpleActivity() {
         when (state) {
             Call.STATE_RINGING -> callRinging()
             Call.STATE_ACTIVE -> callStarted()
-            Call.STATE_DISCONNECTED, Call.STATE_DISCONNECTING -> endCall()
+            Call.STATE_DISCONNECTED -> {
+                if (CallManager.getPhoneState() == NoCall) {
+                    endCall()
+                }
+            }
             Call.STATE_CONNECTING, Call.STATE_DIALING -> initOutgoingCallUI()
             Call.STATE_SELECT_PHONE_ACCOUNT -> showPhoneAccountPicker()
         }
@@ -824,6 +842,11 @@ class CallActivity : SimpleActivity() {
     private fun updateCallOnHoldState(call: Call?) {
         val hasCallOnHold = call != null
         if (hasCallOnHold) {
+            val fastContact = getFastCallContact(applicationContext, call)
+            if (fastContact.number.isNotEmpty()) {
+                val name = getContactNameOrNumber(fastContact)
+                binding.onHoldCallerName.text = name
+            }
             getCallContact(applicationContext, call) { contact ->
                 if (call != CallManager.getHeldCall()) {
                     return@getCallContact
@@ -855,9 +878,12 @@ class CallActivity : SimpleActivity() {
 
     private fun updateCallWaitingState(ringingCall: Call) {
         // Visibility is already set synchronously by updateState().
-        // This callback only updates the caller-name text to avoid a race where
-        // an async beVisible() call could show the banner after the ringing call
-        // has already been answered or declined.
+        // Show fast contact info immediately while async resolution completes.
+        val fastContact = getFastCallContact(applicationContext, ringingCall)
+        if (fastContact.number.isNotEmpty()) {
+            val name = getContactNameOrNumber(fastContact)
+            binding.callWaitingCallerName.text = name
+        }
         getCallContact(applicationContext, ringingCall) { contact ->
             if (ringingCall.getStateCompat() != Call.STATE_RINGING) {
                 return@getCallContact
@@ -870,8 +896,6 @@ class CallActivity : SimpleActivity() {
                     } else {
                         name
                     }
-                    // Do NOT call callWaitingHolder.beVisible() here — that is
-                    // done synchronously in updateState() to prevent race conditions.
                 }
             }
         }
@@ -879,13 +903,40 @@ class CallActivity : SimpleActivity() {
 
     private fun updateCallContactInfo(call: Call?) {
         val targetCall = call ?: CallManager.getPrimaryCall() ?: return
+        val currentHandle = targetCall.details?.handle?.toString() ?: ""
+
+        // 1. Instant update with fast call contact ONLY if no contact info has been loaded yet for this call
+        if (callContact == null || lastLoadedCallHandle != currentHandle || callContact?.number.isNullOrEmpty()) {
+            val fastContact = getFastCallContact(applicationContext, targetCall)
+            if (fastContact.number.isNotEmpty()) {
+                callContact = fastContact
+                lastLoadedCallHandle = currentHandle
+                updateOtherPersonsInfo(fastContact, null)
+                checkCalledSIMCard()
+            }
+        }
+
+        // 2. Async update with full contact name & photo
         getCallContact(applicationContext, targetCall) { contact ->
             val currentPrimaryCall = CallManager.getPrimaryCall()
             if (targetCall != currentPrimaryCall) {
                 return@getCallContact
             }
-            callContact = contact
             val avatar = if (!targetCall.isConference()) contact.photoUri else null
+
+            // Avoid redundant UI updates if contact information and avatar URI haven't changed
+            if (callContact?.name == contact.name &&
+                callContact?.number == contact.number &&
+                callContact?.numberLabel == contact.numberLabel &&
+                lastLoadedAvatarUri == avatar &&
+                lastLoadedCallHandle == currentHandle) {
+                return@getCallContact
+            }
+
+            callContact = contact
+            lastLoadedCallHandle = currentHandle
+            lastLoadedAvatarUri = avatar
+
             runOnUiThread {
                 updateOtherPersonsInfo(contact, avatar)
                 checkCalledSIMCard()
@@ -987,12 +1038,16 @@ class CallActivity : SimpleActivity() {
     }
 
     private fun endCall() {
-        CallManager.reject()
+        if (CallManager.getPhoneState() != NoCall) {
+            CallManager.reject()
+        }
         disableProximitySensor()
         audioRouteChooserDialog?.dismissAllowingStateLoss()
 
         if (isCallEnded) {
-            safeFinishAndRemoveTask()
+            if (CallManager.getPhoneState() == NoCall) {
+                safeFinishAndRemoveTask()
+            }
             return
         }
 
@@ -1002,19 +1057,8 @@ class CallActivity : SimpleActivity() {
         }
 
         isCallEnded = true
-        runOnUiThread {
-            if (callDuration > 0) {
-                disableAllActionButtons()
-                @SuppressLint("SetTextI18n")
-                binding.callStatusLabel.text = "${callDuration.getFormattedDuration()} (${getString(R.string.call_ended)})"
-                Handler(mainLooper).postDelayed(3000) {
-                    safeFinishAndRemoveTask()
-                }
-            } else {
-                disableAllActionButtons()
-                binding.callStatusLabel.text = getString(R.string.call_ended)
-                safeFinishAndRemoveTask()
-            }
+        if (CallManager.getPhoneState() == NoCall) {
+            safeFinishAndRemoveTask()
         }
     }
 

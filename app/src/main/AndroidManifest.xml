@@ -130,10 +130,10 @@
 
         <activity
             android:name="com.novadial.phone.activities.CallActivity"
-            android:excludeFromRecents="true"
             android:exported="false"
             android:label="@string/ongoing_call"
-            android:launchMode="singleTask"
+            android:launchMode="singleInstance"
+            android:taskAffinity="com.novadial.phone.incall"
             android:screenOrientation="portrait"
             android:showOnLockScreen="true" />
 
