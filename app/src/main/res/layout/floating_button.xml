@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:padding="16dp">
+    android:padding="8dp">
 
     <ImageButton
         android:id="@+id/floating_button"
         android:layout_width="56dp"
         android:layout_height="56dp"
-        android:src="@drawable/ic_dialer"
         android:background="@drawable/circle_background"
-        android:contentDescription="@string/floating_button_description" />
-</RelativeLayout>
+        android:contentDescription="@string/floating_button_description"
+        android:src="@drawable/ic_phone_vector"
+        android:scaleType="centerInside"
+        android:padding="12dp" />
+</FrameLayout>
