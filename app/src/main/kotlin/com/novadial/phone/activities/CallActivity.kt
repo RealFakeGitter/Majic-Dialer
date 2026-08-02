@@ -1,4 +1,5 @@
 package com.novadial.phone.activities
+
 import android.annotation.SuppressLint
 import android.net.Uri
 import android.provider.Settings
@@ -97,13 +98,13 @@ class CallActivity : SimpleActivity() {
     override fun onResume() {
         super.onResume()
         updateState()
-        stopFloatingButton()          // ← hide floating button when user is on the call screen
+        stopFloatingButton()
     }
 
     override fun onPause() {
         super.onPause()
         if (!isCallEnded && CallManager.getPhoneState() != NoCall) {
-            startFloatingButton()     // ← show floating button when user leaves the call screen
+            startFloatingButton(callContact?.number)
         }
     }
 
@@ -111,7 +112,7 @@ class CallActivity : SimpleActivity() {
         super.onDestroy()
         CallManager.removeListener(callCallback)
         disableProximitySensor()
-        stopFloatingButton()          // ← always clean up
+        stopFloatingButton()
 
         if (screenOnWakeLock?.isHeld == true) {
             screenOnWakeLock!!.release()
@@ -639,7 +640,6 @@ class CallActivity : SimpleActivity() {
                             callSimId.setTextColor(simColor.getContrastColor())
                             callSimImage.applyColorFilter(simColor)
 
-                            // if an app bubble re-opens this activity, keep UI updated
                             updateState()
                         }
 
@@ -733,6 +733,7 @@ class CallActivity : SimpleActivity() {
             runOnUiThread {
                 updateOtherPersonsInfo(avatar)
                 checkCalledSIMCard()
+                startFloatingButton(contact.number)
             }
         }
     }
@@ -785,7 +786,7 @@ class CallActivity : SimpleActivity() {
         }
 
         isCallEnded = true
-        stopFloatingButton() // ← added line to stop floating button
+        stopFloatingButton()
         runOnUiThread {
             if (callDuration > 0) {
                 disableAllActionButtons()
@@ -921,9 +922,11 @@ class CallActivity : SimpleActivity() {
         return true
     }
 
-    private fun startFloatingButton() {
+    private fun startFloatingButton(phoneNumber: String? = null) {
         if (Settings.canDrawOverlays(this)) {
-            startService(Intent(this, FloatingButtonService::class.java))
+            val intent = Intent(this, FloatingButtonService::class.java)
+            intent.putExtra(FloatingButtonService.EXTRA_PHONE_NUMBER, phoneNumber)
+            startService(intent)
         } else {
             try {
                 val intent = Intent(
@@ -932,7 +935,6 @@ class CallActivity : SimpleActivity() {
                 )
                 startActivity(intent)
             } catch (e: Exception) {
-                // ignore
             }
         }
     }
