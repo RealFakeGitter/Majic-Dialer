@@ -29,6 +29,7 @@ class FloatingButtonService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         floatingView = LayoutInflater.from(this).inflate(R.layout.floating_button, null)
 
@@ -36,7 +37,7 @@ class FloatingButtonService : Service() {
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
@@ -94,15 +95,15 @@ class FloatingButtonService : Service() {
         val displayMetrics = resources.displayMetrics
         val screenWidth = displayMetrics.widthPixels
         val bubbleWidth = floatingView?.width ?: 0
-        val reveal = bubbleWidth / 2
+        val visiblePart = bubbleWidth / 2
 
         val targetX = if (params.x + bubbleWidth / 2 < screenWidth / 2) {
-            -reveal
+            -visiblePart
         } else {
-            screenWidth - reveal
+            screenWidth - visiblePart
         }
 
-        params.x = targetX.coerceAtLeast(-reveal)
+        params.x = targetX
         windowManager?.updateViewLayout(floatingView, params)
     }
 
