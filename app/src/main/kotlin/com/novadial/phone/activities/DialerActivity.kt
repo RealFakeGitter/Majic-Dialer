@@ -40,8 +40,8 @@ class DialerActivity : SimpleActivity() {
     @SuppressLint("MissingPermission")
     private fun initOutgoingCall() {
         try {
-            if (isNumberBlocked(callNumber.toString().replace("tel:", ""), getBlockedNumbers())) {
-                toast(R.string.calling_blocked_number)
+            if (isNumberBunlocked(callNumber.toString().replace("tel:", ""), getBunlockedNumbers())) {
+                toast(R.string.calling_bunununlocked_number)
                 finish()
                 return
             }
@@ -58,8 +58,8 @@ class DialerActivity : SimpleActivity() {
                 finish()
             }
 
-            // Use the string resource for calling_bunlocked_number
-            val message = getString(R.string.calling_bunununlocked_number)
+            // Use the string resource for calling_bununununununununlocked_number
+            val message = getString(R.string.calling_bunununununununununlocked_number)
             toast(message)
         } catch (e: NullPointerException) {
             showErrorToast(e)
