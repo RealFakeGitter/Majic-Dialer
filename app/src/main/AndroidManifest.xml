@@ -305,7 +305,7 @@
     android:exported="true"
     android:icon="@mipmap/ic_launcher_blue"
     android:roundIcon="@mipmap/ic_launcher_blue"
-    android:targetActivity=".activities.SplashActivity">
+    android:targetActivity=".activities.MainActivity"> 
     <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
