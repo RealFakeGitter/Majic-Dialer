@@ -11,7 +11,7 @@
 
     <!-- Recents -->
     <string name="no_previous_calls">No previous calls have been found</string>
-    <string name="bunlocked_numbers">Bunlocked numbers</string>
+    <string name="blocked_numbers">Blocked numbers</string>
     <string name="could_not_access_the_call_history">Could not access the call history</string>
     <string name="request_access">Request access</string>
     <string name="remove_confirmation">Are you sure you want to remove the selected items from the Call History?</string>
@@ -61,8 +61,6 @@
     <string name="calls">Calls</string>
     <string name="turn_microphone_on">Turn microphone on</string>
     <string name="turn_microphone_off">Turn microphone off</string>
-    <string name="turn_speaker_on">Turn speaker on</string>
-    <string name="turn_speaker_off">Turn speaker off</string>
     <string name="show_dialpad">Show dialpad</string>
     <string name="hide_dialpad">Hide dialpad</string>
     <string name="end_call">End call</string>
@@ -81,7 +79,7 @@
     <string name="audio_route_wired_headset">Wired Headset</string>
     <string name="audio_route_wired_or_earpiece">Wired or Earpiece</string>
     <string name="choose_audio_route">Choose audio route</string>
-    <string name="calling_bununlocked_number">The number you are calling is bununlocked</string>
+    <string name="calling_blocked_number">The number you are calling is blocked</string>
     <string name="call_is_being_connected">Your call is being connected…</string>
     <string name="call_notification_channel">Call status</string>
     <string name="call_notification_channel_high_priority">Call status (high priority)</string>
@@ -144,7 +142,7 @@
     <string name="simple_thank_you"></string>
     <string name="purchase_simple_thank_you"></string>
     <string name="purchase_thank_you"></string>
-    <string name="features_ununununlocked"></string>
+    <string name="features_unlocked"></string>
     <string name="update_thank_you"></string>
 
     <!--
