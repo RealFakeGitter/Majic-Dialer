@@ -12,6 +12,7 @@ import android.view.WindowManager
 import android.widget.ImageButton
 import com.novadial.phone.R
 import com.novadial.phone.activities.CallActivity
+import kotlin.math.abs
 
 class FloatingButtonService : Service() {
 
@@ -19,14 +20,18 @@ class FloatingButtonService : Service() {
     private var floatingView: View? = null
     private lateinit var params: WindowManager.LayoutParams
 
+    private var initialX = 0
+    private var initialY = 0
+    private var initialTouchX = 0f
+    private var initialTouchY = 0f
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
-        val inflater = LayoutInflater.from(this)
-        floatingView = inflater.inflate(R.layout.floating_button, null)
+        floatingView = LayoutInflater.from(this).inflate(R.layout.floating_button, null)
 
         params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -44,57 +49,35 @@ class FloatingButtonService : Service() {
 
         val button = floatingView?.findViewById<ImageButton>(R.id.floating_button)
 
-        // Click → return to the call
-        button?.setOnClickListener {
-            val intent = Intent(this, CallActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-            }
-            startActivity(intent)
-        }
-
-        // Drag support
-        floatingView?.setOnTouchListener(object : View.OnTouchListener {
-            private var initialX = 0
-            private var initialY = 0
-            private var initialTouchX = 0f
-            private var initialTouchY = 0f
-            private var isClick = true
-
-            override fun onTouch(v: View, event: MotionEvent): Boolean {
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN -> {
-                        initialX = params.x
-                        initialY = params.y
-                        initialTouchX = event.rawX
-                        initialTouchY = event.rawY
-                        isClick = true
-                        return true
-                    }
-                    MotionEvent.ACTION_MOVE -> {
-                        val dx = event.rawX - initialTouchX
-                        val dy = event.rawY - initialTouchY
-
-                        // If the user moved more than a few pixels, treat it as a drag
-                        if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
-                            isClick = false
-                        }
-
-                        params.x = initialX + dx.toInt()
-                        params.y = initialY + dy.toInt()
-                        windowManager?.updateViewLayout(floatingView, params)
-                        return true
-                    }
-                    MotionEvent.ACTION_UP -> {
-                        if (isClick) {
-                            // Treat as a normal click
-                            button?.performClick()
-                        }
-                        return true
-                    }
+        // Drag + click handling on the whole view
+        floatingView?.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    initialX = params.x
+                    initialY = params.y
+                    initialTouchX = event.rawX
+                    initialTouchY = event.rawY
+                    true
                 }
-                return false
+                MotionEvent.ACTION_MOVE -> {
+                    params.x = initialX + (event.rawX - initialTouchX).toInt()
+                    params.y = initialY + (event.rawY - initialTouchY).toInt()
+                    windowManager?.updateViewLayout(floatingView, params)
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    // If the finger barely moved → treat as click
+                    if (abs(event.rawX - initialTouchX) < 10 && abs(event.rawY - initialTouchY) < 10) {
+                        val intent = Intent(this, CallActivity::class.java).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                        }
+                        startActivity(intent)
+                    }
+                    true
+                }
+                else -> false
             }
-        })
+        }
     }
 
     override fun onDestroy() {
