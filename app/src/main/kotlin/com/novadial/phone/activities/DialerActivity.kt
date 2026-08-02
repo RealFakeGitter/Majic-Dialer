@@ -53,6 +53,10 @@ class DialerActivity : SimpleActivity() {
                 }
                 finish()
             }
+
+            // Use the string resource for calling_bunlocked_number
+            val message = getString(R.string.calling_bunlocked_number)
+            toast(message)
         } catch (e: Exception) {
             showErrorToast(e)
             finish()
