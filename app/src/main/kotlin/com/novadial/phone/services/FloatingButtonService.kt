@@ -12,12 +12,12 @@ import android.view.WindowManager
 import android.widget.ImageButton
 import com.novadial.phone.R
 import com.novadial.phone.activities.CallActivity
-import org.fossify.commons.extensions.toast
 
 class FloatingButtonService : Service() {
 
     private var windowManager: WindowManager? = null
     private var floatingView: View? = null
+    private lateinit var params: WindowManager.LayoutParams
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -28,7 +28,7 @@ class FloatingButtonService : Service() {
         val inflater = LayoutInflater.from(this)
         floatingView = inflater.inflate(R.layout.floating_button, null)
 
-        val params = WindowManager.LayoutParams(
+        params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -43,20 +43,22 @@ class FloatingButtonService : Service() {
         windowManager?.addView(floatingView, params)
 
         val button = floatingView?.findViewById<ImageButton>(R.id.floating_button)
+
+        // Click → return to the call
         button?.setOnClickListener {
-            // Bring the ongoing call screen back
             val intent = Intent(this, CallActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
             }
             startActivity(intent)
         }
 
-        // Make it draggable
+        // Drag support
         floatingView?.setOnTouchListener(object : View.OnTouchListener {
             private var initialX = 0
             private var initialY = 0
             private var initialTouchX = 0f
             private var initialTouchY = 0f
+            private var isClick = true
 
             override fun onTouch(v: View, event: MotionEvent): Boolean {
                 when (event.action) {
@@ -65,12 +67,28 @@ class FloatingButtonService : Service() {
                         initialY = params.y
                         initialTouchX = event.rawX
                         initialTouchY = event.rawY
+                        isClick = true
                         return true
                     }
                     MotionEvent.ACTION_MOVE -> {
-                        params.x = initialX + (event.rawX - initialTouchX).toInt()
-                        params.y = initialY + (event.rawY - initialTouchY).toInt()
+                        val dx = event.rawX - initialTouchX
+                        val dy = event.rawY - initialTouchY
+
+                        // If the user moved more than a few pixels, treat it as a drag
+                        if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+                            isClick = false
+                        }
+
+                        params.x = initialX + dx.toInt()
+                        params.y = initialY + dy.toInt()
                         windowManager?.updateViewLayout(floatingView, params)
+                        return true
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        if (isClick) {
+                            // Treat as a normal click
+                            button?.performClick()
+                        }
                         return true
                     }
                 }
