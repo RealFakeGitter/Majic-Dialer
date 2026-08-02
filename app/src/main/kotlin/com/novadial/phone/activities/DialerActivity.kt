@@ -15,6 +15,10 @@ import com.novadial.phone.extensions.getHandleToUse
 class DialerActivity : SimpleActivity() {
     private var callNumber: Uri? = null
 
+    companion object {
+        const val REQUEST_CODE_SET_DEFAULT_DIALER = 1
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -57,6 +61,12 @@ class DialerActivity : SimpleActivity() {
             // Use the string resource for calling_bunlocked_number
             val message = getString(R.string.calling_bunlocked_number)
             toast(message)
+        } catch (e: NullPointerException) {
+            showErrorToast(e)
+            finish()
+        } catch (e: IllegalArgumentException) {
+            showErrorToast(e)
+            finish()
         } catch (e: Exception) {
             showErrorToast(e)
             finish()
