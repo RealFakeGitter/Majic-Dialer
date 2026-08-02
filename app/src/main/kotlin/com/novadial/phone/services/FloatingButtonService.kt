@@ -43,7 +43,7 @@ class FloatingButtonService : Service() {
             gravity = Gravity.TOP or Gravity.START
             x = 50
             y = 200
-            alpha = 0.70f
+            alpha = 0.65f
         }
 
         val button = floatingView!!.findViewById<ImageButton>(R.id.floating_button)
@@ -79,7 +79,7 @@ class FloatingButtonService : Service() {
                         snapToEdge()
                     }
 
-                    params.alpha = 0.70f
+                    params.alpha = 0.65f
                     windowManager?.updateViewLayout(floatingView, params)
                     true
                 }
@@ -89,21 +89,25 @@ class FloatingButtonService : Service() {
         }
 
         windowManager?.addView(floatingView, params)
+
+        floatingView?.post {
+            snapToEdge()
+            params.alpha = 0.65f
+            windowManager?.updateViewLayout(floatingView, params)
+        }
     }
 
     private fun snapToEdge() {
-        val displayMetrics = resources.displayMetrics
-        val screenWidth = displayMetrics.widthPixels
+        val screenWidth = resources.displayMetrics.widthPixels
         val bubbleWidth = floatingView?.width ?: 0
         val visiblePart = bubbleWidth / 2
 
-        val targetX = if (params.x + bubbleWidth / 2 < screenWidth / 2) {
+        params.x = if (params.x + bubbleWidth / 2 < screenWidth / 2) {
             -visiblePart
         } else {
             screenWidth - visiblePart
         }
 
-        params.x = targetX
         windowManager?.updateViewLayout(floatingView, params)
     }
 
