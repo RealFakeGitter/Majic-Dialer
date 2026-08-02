@@ -1,6 +1,10 @@
+```kotlin
 package com.novadial.phone.activities
 
 import android.annotation.SuppressLint
+import android.net.Uri
+import android.provider.Settings
+import com.novadial.phone.services.FloatingButtonService
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
@@ -92,20 +96,24 @@ class CallActivity : SimpleActivity() {
         updateCallContactInfo(CallManager.getPrimaryCall())
     }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        updateState()
-    }
-
     override fun onResume() {
         super.onResume()
         updateState()
+        stopFloatingButton()          // ← hide floating button when user is on the call screen
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (!isCallEnded && CallManager.getPhoneState() != NoCall) {
+            startFloatingButton()     // ← show floating button when user leaves the call screen
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         CallManager.removeListener(callCallback)
         disableProximitySensor()
+        stopFloatingButton()          // ← always clean up
 
         if (screenOnWakeLock?.isHeld == true) {
             screenOnWakeLock!!.release()
@@ -779,6 +787,7 @@ class CallActivity : SimpleActivity() {
         }
 
         isCallEnded = true
+        stopFloatingButton() // ← added line to stop floating button
         runOnUiThread {
             if (callDuration > 0) {
                 disableAllActionButtons()
@@ -913,4 +922,25 @@ class CallActivity : SimpleActivity() {
         binding.dialpadInput.setText("")
         return true
     }
+
+    private fun startFloatingButton() {
+        if (Settings.canDrawOverlays(this)) {
+            startService(Intent(this, FloatingButtonService::class.java))
+        } else {
+            try {
+                val intent = Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:$packageName")
+                )
+                startActivity(intent)
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
+    }
+
+    private fun stopFloatingButton() {
+        stopService(Intent(this, FloatingButtonService::class.java))
+    }
 }
+```
