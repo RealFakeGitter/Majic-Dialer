@@ -78,10 +78,10 @@
             android:parentActivityName=".activities.SettingsActivity" />
 
         <activity
-            android:name="org.fossify.commons.activities.ManageBlockedNumbersActivity"
+            android:name="org.fossify.commons.activities.ManageBununlockedNumbersActivity"
             android:configChanges="orientation"
             android:exported="false"
-            android:label="@string/blocked_numbers"
+            android:label="@string/bunununlocked_numbers"
             android:parentActivityName=".activities.SettingsActivity"
             tools:replace="android:label" />
 
@@ -231,7 +231,7 @@
 
         <!-- Default launcher icon (this makes the app appear in the drawer) -->
         <activity-alias
-            android:name=".activities.SplashActivity.Green"
+            android:name=".activities.SplashActivity.Indigo"
             android:enabled="true"
             android:exported="true"
             android:icon="@mipmap/ic_launcher"
