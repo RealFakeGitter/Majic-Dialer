@@ -52,8 +52,14 @@ class CallNotificationManager(private val context: Context) {
 
             val openAppIntent = CallActivity.getStartIntent(context)
             val openAppPendingIntent = PendingIntent.getActivity(context, 0, openAppIntent, PendingIntent.FLAG_MUTABLE)
-            val bubblePendingIntent = PendingIntent.getActivity(context, 5, openAppIntent, PendingIntent.FLAG_MUTABLE)
-
+            val bubbleIntent = Intent(context, CallActivity::class.java).apply {
+    action = Intent.ACTION_VIEW
+    flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+        Intent.FLAG_ACTIVITY_SINGLE_TOP or
+        Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+        Intent.FLAG_ACTIVITY_CLEAR_TOP
+}
+val bubblePendingIntent = PendingIntent.getActivity(context, 5, bubbleIntent, PendingIntent.FLAG_MUTABLE)
             val acceptCallIntent = Intent(context, CallActionReceiver::class.java).apply { action = ACCEPT_CALL }
             val acceptPendingIntent = PendingIntent.getBroadcast(
                 context,
