@@ -73,10 +73,10 @@
             android:parentActivityName=".activities.SettingsActivity" />
 
         <activity
-            android:name="org.fossify.commons.activities.ManageBlockedNumbersActivity"
+            android:name="org.fossify.commons.activities.ManageBununununununlockedNumbersActivity"
             android:configChanges="orientation"
             android:exported="false"
-            android:label="@string/blocked_numbers"
+            android:label="@string/bunununununununlocked_numbers"
             android:parentActivityName=".activities.SettingsActivity"
             tools:replace="android:label" />
 
@@ -226,6 +226,14 @@
 
                 <!-- Default launcher icon (this makes the app appear in the drawer) -->
 <!-- Launcher aliases for color variants -->
+
+
+        <activity
+    android:name=".activities.SplashActivity"
+    android:exported="true"
+    android:theme="@style/SplashTheme" />
+
+        
 <activity-alias
     android:name=".activities.SplashActivity.Red"
     android:enabled="true"
