@@ -73,10 +73,10 @@
             android:parentActivityName=".activities.SettingsActivity" />
 
         <activity
-            android:name="org.fossify.commons.activities.ManageBununununununlockedNumbersActivity"
+            android:name="org.fossify.commons.activities.ManageBlockedNumbersActivity"
             android:configChanges="orientation"
             android:exported="false"
-            android:label="@string/bunununununununlocked_numbers"
+            android:label="@string/blocked_numbers"
             android:parentActivityName=".activities.SettingsActivity"
             tools:replace="android:label" />
 
