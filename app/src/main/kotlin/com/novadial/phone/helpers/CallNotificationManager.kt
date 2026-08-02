@@ -167,17 +167,19 @@ val bubblePendingIntent = PendingIntent.getActivity(context, 5, bubbleIntent, Pe
                 R.drawable.ic_call_received_notification
             }
 
-            val builder = NotificationCompat.Builder(context, channelId)
-                .setSmallIcon(iconId)
-                .setContentIntent(openAppPendingIntent)
-                .setDeleteIntent(deletePendingIntent)
-                .setCategory(Notification.CATEGORY_CALL)
-                .setCustomContentView(collapsedView)
-                .setOngoing(true)
-                .setUsesChronometer(callState == Call.STATE_ACTIVE)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-
+            
+val builder = NotificationCompat.Builder(context, channelId)
+    .setSmallIcon(iconId)
+    .setContentIntent(openAppPendingIntent)
+    .setDeleteIntent(deletePendingIntent)
+    .setCategory(Notification.CATEGORY_CALL)
+    .setContentTitle(callerName)
+    .setContentText(context.getString(contentTextId))
+    .setCustomContentView(collapsedView)
+    .setOngoing(true)
+    .setUsesChronometer(callState == Call.STATE_ACTIVE)
+    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+    .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             if (context.config.enableCallBubbles && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 try {
                     val shortcutIntent = Intent(context, CallActivity::class.java).apply {
@@ -202,7 +204,7 @@ val bubblePendingIntent = PendingIntent.getActivity(context, 5, bubbleIntent, Pe
                         bubblePendingIntent,
                         IconCompat.createWithResource(context, iconId)
                     )
-                        .setAutoExpandBubble(false)
+                        .setAutoExpandBubble(true)
                         .setSuppressNotification(false)
                         .build()
 
