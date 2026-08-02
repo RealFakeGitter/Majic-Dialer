@@ -11,7 +11,7 @@
 
     <!-- Recents -->
     <string name="no_previous_calls">No previous calls have been found</string>
-    <string name="bununununununlocked_numbers">Your string value here</string>
+    <string name="bununununlocked_numbers">This number is unlocked.</string>
     <string name="could_not_access_the_call_history">Could not access the call history</string>
     <string name="request_access">Request access</string>
     <string name="remove_confirmation">Are you sure you want to remove the selected items from the Call History?</string>
