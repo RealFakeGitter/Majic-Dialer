@@ -2,8 +2,11 @@ package com.novadial.phone.services
 
 import android.app.Service
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.graphics.PixelFormat
+import android.net.Uri
 import android.os.IBinder
+import android.provider.ContactsContract
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -47,6 +50,7 @@ class FloatingButtonService : Service() {
         }
 
         val button = floatingView!!.findViewById<ImageButton>(R.id.floating_button)
+        setDefaultIcon()
 
         button.setOnTouchListener { _, event ->
             when (event.actionMasked) {
@@ -95,6 +99,57 @@ class FloatingButtonService : Service() {
             params.alpha = 0.65f
             windowManager?.updateViewLayout(floatingView, params)
         }
+    }
+
+    fun updateContactPhoto(phoneNumber: String?) {
+        if (phoneNumber.isNullOrBlank()) {
+            setDefaultIcon()
+            return
+        }
+
+        val uri = Uri.withAppendedPath(
+            ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
+            Uri.encode(phoneNumber)
+        )
+
+        val projection = arrayOf(
+            ContactsContract.PhoneLookup.PHOTO_URI,
+            ContactsContract.PhoneLookup._ID
+        )
+
+        contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val photoUriString = cursor.getString(0)
+                val contactId = cursor.getLong(1)
+
+                val photoUri = when {
+                    !photoUriString.isNullOrBlank() -> Uri.parse(photoUriString)
+                    contactId > 0 -> Uri.withAppendedPath(
+                        ContactsContract.Contacts.CONTENT_URI,
+                        contactId.toString()
+                    ).buildUpon().appendPath(ContactsContract.Contacts.Photo.CONTENT_DIRECTORY).build()
+                    else -> null
+                }
+
+                if (photoUri != null) {
+                    contentResolver.openInputStream(photoUri)?.use { stream ->
+                        val bitmap = BitmapFactory.decodeStream(stream)
+                        if (bitmap != null) {
+                            floatingView?.findViewById<ImageButton>(R.id.floating_button)
+                                ?.setImageBitmap(bitmap)
+                            return
+                        }
+                    }
+                }
+            }
+        }
+
+        setDefaultIcon()
+    }
+
+    private fun setDefaultIcon() {
+        floatingView?.findViewById<ImageButton>(R.id.floating_button)
+            ?.setImageResource(R.drawable.ic_phone)
     }
 
     private fun snapToEdge() {
