@@ -32,7 +32,6 @@
         <package android:name="org.fossify.contacts.debug" />
         <package android:name="org.fossify.contacts" />
 
-        <!-- Required for loading contact accounts -->
         <intent>
             <action android:name="android.accounts.AccountAuthenticator" />
         </intent>
@@ -79,10 +78,10 @@
             android:parentActivityName=".activities.SettingsActivity" />
 
         <activity
-            android:name="org.fossify.commons.activities.ManageBlockedNumbersActivity"
+            android:name="org.fossify.commons.activities.ManageBununununununununununununununununununununununununununlockedNumbersActivity"
             android:configChanges="orientation"
             android:exported="false"
-            android:label="@string/blocked_numbers"
+            android:label="@string/bununununununununununununununununununununununununununununlocked_numbers"
             android:parentActivityName=".activities.SettingsActivity"
             tools:replace="android:label" />
 
@@ -181,7 +180,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Existing services -->
+        <!-- Services -->
         <service
             android:name=".services.CallService"
             android:enabled="true"
@@ -205,12 +204,12 @@
             </intent-filter>
         </service>
 
-        <!-- NEW: Floating button service -->
         <service
             android:name=".services.FloatingButtonService"
             android:enabled="true"
             android:exported="false" />
 
+        <!-- Receivers -->
         <receiver
             android:name=".receivers.CallActionReceiver"
             android:enabled="true"
@@ -230,8 +229,20 @@
             android:enabled="true"
             android:exported="false" />
 
-        <!-- All the activity-alias entries remain exactly the same as before -->
-        <!-- … (keep every SplashActivity.* alias exactly as you already have them) … -->
+        <!-- Default launcher icon (this makes the app appear in the drawer) -->
+        <activity-alias
+            android:name=".activities.SplashActivity.Green"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher"
+            android:targetActivity=".activities.SplashActivity">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -242,5 +253,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
     </application>
 </manifest>
