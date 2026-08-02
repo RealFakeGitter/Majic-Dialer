@@ -205,7 +205,7 @@
             android:exported="false" />
 
         <!-- Receivers -->
-        <receiver
+          <receiver
             android:name=".receivers.CallActionReceiver"
             android:enabled="true"
             android:exported="false" />
@@ -224,11 +224,7 @@
             android:enabled="true"
             android:exported="false" />
 
-                <!-- Default launcher icon (this makes the app appear in the drawer) -->
-<!-- Launcher aliases for color variants -->
-
-
-      <activity-alias
+        <activity-alias
             android:name=".activities.SplashActivity.Red"
             android:enabled="false"
             android:exported="true"
