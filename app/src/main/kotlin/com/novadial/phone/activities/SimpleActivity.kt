@@ -122,52 +122,68 @@ open class SimpleActivity : BaseSimpleActivity() {
         }
     }
 
-    fun showDefaultDialerDialog(onDismiss: (() -> Unit)? = null) {
-        try {
-            MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.default_phone_app_dialog_title)
-                .setMessage(R.string.default_phone_app_dialog_desc)
-                .setPositiveButton(R.string.set_as_default) { _, _ ->
-                    launchSetDefaultDialerIntentSafe()
-                }
-                .setNegativeButton(org.fossify.commons.R.string.cancel) { dialog, _ ->
-                    config.defaultDialerPromptDismissed = true
-                    dialog.dismiss()
-                    onDismiss?.invoke()
-                }
-                .setOnCancelListener {
-                    config.defaultDialerPromptDismissed = true
-                    onDismiss?.invoke()
-                }
-                .show()
-        } catch (e: Exception) {
-            Log.w("NOVADIAL_CALL", "Failed to show default dialer dialog: ${e.message}")
+    private var defaultDialerDialog: androidx.appcompat.app.AlertDialog? = null
+
+fun showDefaultDialerDialog(onDismiss: (() -> Unit)? = null) {
+    try {
+        if (isFinishing || isDestroyed) {
             onDismiss?.invoke()
+            return
         }
-    }
 
-    fun showDirectCallDefaultDialerReminder(onProceedWithFallback: () -> Unit) {
-        try {
-            MaterialAlertDialogBuilder(this)
-                .setMessage(R.string.not_default_dialer_reminder)
-                .setPositiveButton(R.string.set_as_default) { _, _ ->
-                    launchSetDefaultDialerIntentSafe()
-                }
-                .setNegativeButton(R.string.call_via_system_app) { dialog, _ ->
-                    dialog.dismiss()
-                    onProceedWithFallback()
-                }
-                .setOnCancelListener {
-                    onProceedWithFallback()
-                }
-                .show()
-        } catch (e: Exception) {
-            Log.w("NOVADIAL_CALL", "Failed to show direct call reminder: ${e.message}")
-            onProceedWithFallback()
-        }
-    }
+        defaultDialerDialog?.dismiss()
+        defaultDialerDialog = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.default_phone_app_dialog_title)
+            .setMessage(R.string.default_phone_app_dialog_desc)
+            .setPositiveButton(R.string.set_as_default) { _, _ ->
+                launchSetDefaultDialerIntentSafe()
+            }
+            .setNegativeButton(org.fossify.commons.R.string.cancel) { dialog, _ ->
+                config.defaultDialerPromptDismissed = true
+                dialog.dismiss()
+                onDismiss?.invoke()
+            }
+            .setOnCancelListener {
+                config.defaultDialerPromptDismissed = true
+                onDismiss?.invoke()
+            }
+            .create()
 
-    override fun getPackageName(): String {
+        defaultDialerDialog?.show()
+    } catch (e: Exception) {
+        Log.w("NOVADIAL_CALL", "Failed to show default dialer dialog: ${e.message}")
+        onDismiss?.invoke()
+    }
+}
+
+override fun onPause() {
+    defaultDialerDialog?.dismiss()
+    defaultDialerDialog = null
+    super.onPause()
+}
+
+fun showDirectCallDefaultDialerReminder(onProceedWithFallback: () -> Unit) {
+    try {
+        MaterialAlertDialogBuilder(this)
+            .setMessage(R.string.not_default_dialer_reminder)
+            .setPositiveButton(R.string.set_as_default) { _, _ ->
+                launchSetDefaultDialerIntentSafe()
+            }
+            .setNegativeButton(R.string.call_via_system_app) { dialog, _ ->
+                dialog.dismiss()
+                onProceedWithFallback()
+            }
+            .setOnCancelListener {
+                onProceedWithFallback()
+            }
+            .show()
+    } catch (e: Exception) {
+        Log.w("NOVADIAL_CALL", "Failed to show direct call reminder: ${e.message}")
+        onProceedWithFallback()
+    }
+}
+
+override fun getPackageName(): String {
         val stack = Thread.currentThread().stackTrace
         val directCaller = if (stack.size > 3) stack[3].className else ""
         return if (directCaller.startsWith("org.fossify.")) {
