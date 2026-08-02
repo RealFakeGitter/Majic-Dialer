@@ -1,7 +1,7 @@
 <p align="center">
   <img src="fastlane/metadata/android/en-US/images/icon.png" width="160" height="160" alt="NovaDial Icon">
 </p>
-<h1 align="center">NovaDial</h1>
+<h1 align="center">Majic Dialer</h1>
 <p align="center">
   <strong>Call with Speed. Call with Privacy. Call with Style.</strong>
 </p>
@@ -31,12 +31,15 @@
 
 This is a FORK of Novadial with the only aim to add a floating button to return to call the rest remains the same. NOTE, i likely wont maintian this app I made it for me, if you want updates use NovaDial, i probably will ditch it if the dev includes the one feature :)  
 
+___________________________________________________________________________________________________________________________________________________________________________________
+
 NovaDial is a community-driven fork of Fossify Phone with additional UI improvements, performance optimizations, customization options, and dialer enhancements.
 
 The goal of NovaDial is to provide a modern and feature-rich dialer while remaining lightweight, privacy-friendly, and open source.
 
 ## Features
 
+* Floating Bubble :) 
 * Fast call history loading
 * Optimized recent calls view
 * Contact-centric call history
