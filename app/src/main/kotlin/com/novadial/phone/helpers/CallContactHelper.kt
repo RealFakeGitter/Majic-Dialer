@@ -14,18 +14,51 @@ import com.novadial.phone.extensions.config
 import com.novadial.phone.extensions.isConference
 import com.novadial.phone.models.CallContact
 
+fun getFastCallContact(context: Context, call: Call?): CallContact {
+    if (call == null) return CallContact("", "", "", "")
+    if (call.isConference()) {
+        return CallContact(context.getString(R.string.conference), "", "", "")
+    }
+
+    val handle = try {
+        call.details?.handle?.toString()
+    } catch (e: Exception) {
+        null
+    }
+
+    if (handle == null) return CallContact("", "", "", "")
+
+    val uri = Uri.decode(handle)
+    if (uri.startsWith("tel:")) {
+        val rawNumber = uri.substringAfter("tel:")
+        val formattedNumber = if (context.config.formatPhoneNumbers) {
+            rawNumber.formatPhoneNumber()
+        } else {
+            rawNumber
+        }
+        return CallContact(name = formattedNumber, photoUri = "", number = formattedNumber, numberLabel = "")
+    }
+
+    return CallContact("", "", "", "")
+}
+
 fun getCallContact(context: Context, call: Call?, callback: (CallContact) -> Unit) {
+    if (call == null) {
+        callback(CallContact("", "", "", ""))
+        return
+    }
+
     if (call.isConference()) {
         callback(CallContact(context.getString(R.string.conference), "", "", ""))
         return
     }
 
-    val privateCursor = context.getMyContactsCursor(favoritesOnly = false, withPhoneNumbersOnly = true)
     ensureBackgroundThread {
+        val privateCursor = context.getMyContactsCursor(favoritesOnly = false, withPhoneNumbersOnly = true)
         val callContact = CallContact("", "", "", "")
         val handle = try {
-            call?.details?.handle?.toString()
-        } catch (e: NullPointerException) {
+            call.details?.handle?.toString()
+        } catch (e: Exception) {
             null
         }
 
@@ -37,19 +70,10 @@ fun getCallContact(context: Context, call: Call?, callback: (CallContact) -> Uni
         val uri = Uri.decode(handle)
         if (uri.startsWith("tel:")) {
             val number = uri.substringAfter("tel:")
-            ContactsHelper(context).getContacts(getAll = true, showOnlyContactsWithNumbers = true) { contacts ->
+            ContactsCache.getContacts(context) { contacts ->
                 val privateContacts = MyContactsContentProvider.getContacts(context, privateCursor)
                 if (privateContacts.isNotEmpty()) {
                     contacts.addAll(privateContacts)
-                }
-
-                val contactsWithMultipleNumbers = contacts.filter { it.phoneNumbers.size > 1 }
-                val numbersToContactIDMap = HashMap<String, Int>()
-                contactsWithMultipleNumbers.forEach { contact ->
-                    contact.phoneNumbers.forEach { phoneNumber ->
-                        numbersToContactIDMap[phoneNumber.value] = contact.contactId
-                        numbersToContactIDMap[phoneNumber.normalizedNumber] = contact.contactId
-                    }
                 }
 
                 callContact.number = if (context.config.formatPhoneNumbers) {
@@ -75,6 +99,8 @@ fun getCallContact(context: Context, call: Call?, callback: (CallContact) -> Uni
 
                 callback(callContact)
             }
+        } else {
+            callback(callContact)
         }
     }
 }
