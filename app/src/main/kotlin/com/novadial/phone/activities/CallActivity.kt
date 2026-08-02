@@ -1,6 +1,4 @@
-```kotlin
 package com.novadial.phone.activities
-
 import android.annotation.SuppressLint
 import android.net.Uri
 import android.provider.Settings
@@ -943,4 +941,3 @@ class CallActivity : SimpleActivity() {
         stopService(Intent(this, FloatingButtonService::class.java))
     }
 }
-```
