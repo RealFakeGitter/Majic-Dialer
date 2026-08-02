@@ -10,8 +10,8 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageButton
-import com.novadial.phone.R
 import com.novadial.phone.activities.CallActivity
+import com.novadial.phone.R
 import kotlin.math.abs
 
 class FloatingButtonService : Service() {
@@ -64,10 +64,15 @@ class FloatingButtonService : Service() {
                 }
 
                 MotionEvent.ACTION_UP -> {
-                    if (abs(event.rawX - initialTouchX) < 10 && abs(event.rawY - initialTouchY) < 10) {
+                    val dx = abs(event.rawX - initialTouchX)
+                    val dy = abs(event.rawY - initialTouchY)
+
+                    if (dx < 10 && dy < 10) {
                         startActivity(Intent(this, CallActivity::class.java).apply {
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
                         })
+                    } else {
+                        snapToEdge()
                     }
                     true
                 }
@@ -77,6 +82,21 @@ class FloatingButtonService : Service() {
         }
 
         windowManager?.addView(floatingView, params)
+    }
+
+    private fun snapToEdge() {
+        val displayMetrics = resources.displayMetrics
+        val screenWidth = displayMetrics.widthPixels
+        val bubbleWidth = floatingView?.width ?: 0
+
+        val targetX = if (params.x + bubbleWidth / 2 < screenWidth / 2) {
+            0
+        } else {
+            screenWidth - bubbleWidth
+        }
+
+        params.x = targetX.coerceAtLeast(0)
+        windowManager?.updateViewLayout(floatingView, params)
     }
 
     override fun onDestroy() {
