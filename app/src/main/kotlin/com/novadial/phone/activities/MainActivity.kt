@@ -90,7 +90,7 @@ class MainActivity : SimpleActivity() {
             if (!config.wasOverlaySnackbarConfirmed && !Settings.canDrawOverlays(this)) {
                 val snackbar = Snackbar.make(
                     binding.mainHolder,
-                    R.string.allow_displaying_over_other_apps,
+                    R.string.allow_displaying_over_other_apps, // Replace with the correct string resource ID
                     Snackbar.LENGTH_INDEFINITE
                 ).setAction(R.string.ok) {
                     config.wasOverlaySnackbarConfirmed = true
@@ -509,8 +509,6 @@ class MainActivity : SimpleActivity() {
             startActivity(this)
         }
     }
-
-
 
     fun refreshFragments() {
         cacheContacts()
