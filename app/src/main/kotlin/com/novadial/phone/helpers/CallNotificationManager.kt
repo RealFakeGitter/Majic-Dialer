@@ -172,7 +172,7 @@ class CallNotificationManager(private val context: Context) {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setStyle(NotificationCompat.DecoratedCustomViewStyle())
 
-            if (context.config.enableCallBubbles && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (context.config.enableCallBubbles && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 try {
                     val shortcutIntent = Intent(context, CallActivity::class.java).apply {
                         action = Intent.ACTION_VIEW
