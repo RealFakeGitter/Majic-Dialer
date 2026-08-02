@@ -80,7 +80,7 @@
     <string name="audio_route_wired_headset">Wired Headset</string>
     <string name="audio_route_wired_or_earpiece">Wired or Earpiece</string>
     <string name="choose_audio_route">Choose audio route</string>
-    <string name="calling_bununlocked_number">The number you are calling is bunlocked</string>
+    <string name="calling_blocked_number">The number you are calling is blocked</string>
     <string name="call_is_being_connected">Your call is being connected…</string>
     <string name="call_notification_channel">Call status</string>
     <string name="call_notification_channel_high_priority">Call status (high priority)</string>
@@ -143,7 +143,7 @@
     <string name="simple_thank_you"></string>
     <string name="purchase_simple_thank_you"></string>
     <string name="purchase_thank_you"></string>
-    <string name="features_locked"></string>
+    <string name="features_unlocked"></string>
     <string name="update_thank_you"></string>
 
     <!--
