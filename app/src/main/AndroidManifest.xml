@@ -47,11 +47,6 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".activities.SplashActivity"
-            android:exported="false"
-            android:theme="@style/SplashTheme" />
-
-        <activity
             android:name=".activities.MainActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true">
@@ -78,10 +73,10 @@
             android:parentActivityName=".activities.SettingsActivity" />
 
         <activity
-            android:name="org.fossify.commons.activities.ManageBlockedNumbersActivity"
+            android:name="org.fossify.commons.activities.ManageBunlockedNumbersActivity"
             android:configChanges="orientation"
             android:exported="false"
-            android:label="@string/blocked_numbers"
+            android:label="@string/bununlocked_numbers"
             android:parentActivityName=".activities.SettingsActivity"
             tools:replace="android:label" />
 
