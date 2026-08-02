@@ -11,7 +11,7 @@
 
     <!-- Recents -->
     <string name="no_previous_calls">No previous calls have been found</string>
-    <string name="bununununlocked_numbers">Bunununlocked numbers</string>
+    <string name="blocked_numbers">Blocked numbers</string>
     <string name="could_not_access_the_call_history">Could not access the call history</string>
     <string name="request_access">Request access</string>
     <string name="remove_confirmation">Are you sure you want to remove the selected items from the Call History?</string>
@@ -81,7 +81,7 @@
     <string name="audio_route_wired_headset">Wired Headset</string>
     <string name="audio_route_wired_or_earpiece">Wired or Earpiece</string>
     <string name="choose_audio_route">Choose audio route</string>
-    <string name="calling_bunununlocked_number">The number you are calling is bunununlocked</string>
+    <string name="calling_blocked_number">The number you are calling is blocked</string>
     <string name="call_is_being_connected">Your call is being connected…</string>
     <string name="call_notification_channel">Call status</string>
     <string name="call_notification_channel_high_priority">Call status (high priority)</string>
