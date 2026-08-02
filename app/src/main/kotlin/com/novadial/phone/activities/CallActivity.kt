@@ -637,20 +637,13 @@ class CallActivity : SimpleActivity() {
         binding.holdStatusLabel.beInvisibleIf(!isOnHold)
     }
 
-    private fun updateOtherPersonsInfo(avatarUri: String?) {
-        if (callContact == null) {
-            return
-        }
-
+    private fun updateOtherPersonsInfo(contact: CallContact, avatarUri: String?) {
         binding.apply {
-            val (name, _, number, numberLabel) = callContact!!
+            val (name, _, number, numberLabel) = contact
             callerNameLabel.text = name.ifEmpty { getString(R.string.unknown_caller) }
             if (number.isNotEmpty() && number != name) {
-                callerNumber.text = number
-
-                if (numberLabel.isNotEmpty()) {
-                    callerNumber.text = "$number - $numberLabel"
-                }
+                callerNumber.beVisible()
+                callerNumber.text = if (numberLabel.isNotEmpty()) "$number - $numberLabel" else number
             } else {
                 callerNumber.beGone()
             }
@@ -732,6 +725,12 @@ class CallActivity : SimpleActivity() {
             else -> 0
         }
 
+        // Merge is enabled only when Android Telecom actually reports conferencing
+        // capability — not simply because the call is ACTIVE.
+        val canMerge = !isCallEnded &&
+            (call.conferenceableCalls.isNotEmpty() ||
+                call.hasCapability(Call.Details.CAPABILITY_MERGE_CONFERENCE))
+
         binding.apply {
             if (statusTextId != 0) {
                 callStatusLabel.text = getString(statusTextId)
@@ -741,7 +740,7 @@ class CallActivity : SimpleActivity() {
 
             callManage.beVisibleIf(!isCallEnded && call.hasCapability(Call.Details.CAPABILITY_MANAGE_CONFERENCE))
             setActionButtonEnabled(callSwap, enabled = !isCallEnded && state == Call.STATE_ACTIVE)
-            setActionButtonEnabled(callMerge, enabled = !isCallEnded && state == Call.STATE_ACTIVE)
+            setActionButtonEnabled(callMerge, enabled = canMerge)
         }
     }
 
@@ -791,6 +790,9 @@ class CallActivity : SimpleActivity() {
                 binding.incomingCallHolder.beGone()
                 hideCallWaitingBanner()
                 animateCallWaitingDim(dim = false)
+                // Safety net: ensure the waiting tone is always stopped when there is
+                // no ringing call, regardless of how the second call was dismissed.
+                callAudioManager.stopCallWaitingTone()
                 when (phoneState) {
                     is SingleCall -> {
                         updateCallState(phoneState.call)
@@ -823,6 +825,9 @@ class CallActivity : SimpleActivity() {
         val hasCallOnHold = call != null
         if (hasCallOnHold) {
             getCallContact(applicationContext, call) { contact ->
+                if (call != CallManager.getHeldCall()) {
+                    return@getCallContact
+                }
                 runOnUiThread {
                     val name = getContactNameOrNumber(contact)
                     binding.onHoldCallerName.text = if (contact.number.isNotEmpty() && contact.number != contact.name) {
@@ -833,12 +838,16 @@ class CallActivity : SimpleActivity() {
                 }
             }
         }
+        // Merge is only available when Telecom explicitly reports the capability on the
+        // primary call — not simply because two calls exist.
         val primaryCall = CallManager.getPrimaryCall()
-        val canMerge = primaryCall?.hasCapability(Call.Details.CAPABILITY_MERGE_CONFERENCE) == true ||
-            primaryCall?.conferenceableCalls?.isNotEmpty() == true
+        val canMerge = hasCallOnHold && (
+            primaryCall?.hasCapability(Call.Details.CAPABILITY_MERGE_CONFERENCE) == true ||
+                primaryCall?.conferenceableCalls?.isNotEmpty() == true
+        )
         binding.apply {
             onHoldStatusHolder.beVisibleIf(hasCallOnHold)
-            onHoldMerge.beVisibleIf(hasCallOnHold && canMerge)
+            onHoldMerge.beVisibleIf(canMerge)
             controlsSingleCall.beVisibleIf(!hasCallOnHold)
             controlsTwoCalls.beVisibleIf(hasCallOnHold)
         }
@@ -869,19 +878,16 @@ class CallActivity : SimpleActivity() {
     }
 
     private fun updateCallContactInfo(call: Call?) {
-        getCallContact(applicationContext, call) { contact ->
-            // Accept the call if it matches either the primary slot or the ringing slot.
-            // This covers the two-call scenario where the primary call is the active/held
-            // call and the ringing call is a separate waiting call.
-            val primaryCall = CallManager.getPrimaryCall()
-            val ringingCall = CallManager.getRingingCall()
-            if (call != primaryCall && call != ringingCall) {
+        val targetCall = call ?: CallManager.getPrimaryCall() ?: return
+        getCallContact(applicationContext, targetCall) { contact ->
+            val currentPrimaryCall = CallManager.getPrimaryCall()
+            if (targetCall != currentPrimaryCall) {
                 return@getCallContact
             }
             callContact = contact
-            val avatar = if (call != null && !call.isConference()) contact.photoUri else null
+            val avatar = if (!targetCall.isConference()) contact.photoUri else null
             runOnUiThread {
-                updateOtherPersonsInfo(avatar)
+                updateOtherPersonsInfo(contact, avatar)
                 checkCalledSIMCard()
             }
         }
@@ -946,7 +952,13 @@ class CallActivity : SimpleActivity() {
     }
 
     private fun callRinging() {
-        binding.incomingCallHolder.beVisible()
+        // Only show the full-screen incoming call UI when there is NO active or held call.
+        // During call-waiting (active call + second ringing call), updateState() handles
+        // the incoming banner overlay; we must NOT replace the active-call UI here.
+        val hasLiveCall = CallManager.getActiveCall() != null || CallManager.getHeldCall() != null
+        if (!hasLiveCall) {
+            binding.incomingCallHolder.beVisible()
+        }
     }
 
     private fun callStarted() {
@@ -954,6 +966,14 @@ class CallActivity : SimpleActivity() {
         binding.incomingCallHolder.beGone()
         binding.ongoingCallHolder.beVisible()
         binding.callEnd.beVisible()
+        // Clear call-waiting banner/tone only if no ringing call exists anymore.
+        // If a second call is currently ringing while the active call is updated,
+        // do NOT hide the banner or stop the waiting tone.
+        if (CallManager.getRingingCall() == null) {
+            callAudioManager.stopCallWaitingTone()
+            hideCallWaitingBanner()
+            animateCallWaitingDim(dim = false)
+        }
         callDurationHandler.removeCallbacks(updateCallDurationTask)
         callDurationHandler.post(updateCallDurationTask)
     }
@@ -1029,6 +1049,18 @@ class CallActivity : SimpleActivity() {
             // The ViewModel's secondCallEvent handles the tone via StateFlow collection.
             // Here we just ensure the UI updates synchronously for the incoming banner.
             updateState()
+        }
+
+        override fun onRingingCallEnded() {
+            // The ringing call was removed (answered, rejected, or timed out).
+            // Stop the waiting tone and hide the call-waiting banner immediately,
+            // covering paths where the call was dismissed outside the UI buttons
+            // (e.g. via notification action, headset button, or remote hangup).
+            callAudioManager.stopCallWaitingTone()
+            runOnUiThread {
+                hideCallWaitingBanner()
+                animateCallWaitingDim(dim = false)
+            }
         }
     }
 

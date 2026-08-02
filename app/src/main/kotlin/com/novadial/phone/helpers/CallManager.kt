@@ -51,8 +51,17 @@ class CallManager {
         }
 
         fun onCallRemoved(call: Call) {
+            val wasRinging = call.getStateCompat() == Call.STATE_RINGING
             calls.remove(call)
+            // Notify listeners that a ringing (call-waiting) call has ended so they
+            // can stop the waiting tone regardless of how the call was dismissed.
+            if (wasRinging) {
+                for (listener in listeners) {
+                    listener.onRingingCallEnded()
+                }
+            }
             updateState()
+            // Auto-promote the held call when the active call ends.
             val remainingCall = calls.firstOrNull()
             if (remainingCall != null && remainingCall.getStateCompat() == Call.STATE_HOLDING) {
                 remainingCall.unhold()
@@ -77,7 +86,15 @@ class CallManager {
                 1 -> SingleCall(calls.first())
                 else -> {
                     val primary = getPrimaryCall() ?: return NoCall
-                    val held = getHeldCall() ?: calls.find { it != primary && it.getStateCompat() != Call.STATE_RINGING }
+                    // Explicitly exclude RINGING calls from the held slot — a waiting/incoming
+                    // call must never appear as the "on hold" call in TwoCalls.
+                    val held = getHeldCall()
+                        ?: calls.find {
+                            it != primary &&
+                                it.getStateCompat() != Call.STATE_RINGING &&
+                                it.getStateCompat() != Call.STATE_DISCONNECTED &&
+                                it.getStateCompat() != Call.STATE_DISCONNECTING
+                        }
                     if (held != null) {
                         TwoCalls(primary, held)
                     } else {
@@ -112,7 +129,6 @@ class CallManager {
             calls.removeAll { it.getStateCompat() == Call.STATE_DISCONNECTED }
 
             val primaryCall = getPrimaryCall()
-            var notify = true
             if (primaryCall == null) {
                 call = null
             } else if (primaryCall != call) {
@@ -120,12 +136,9 @@ class CallManager {
                 for (listener in listeners) {
                     listener.onPrimaryCallChanged(primaryCall)
                 }
-                notify = false
             }
-            if (notify) {
-                for (listener in listeners) {
-                    listener.onStateChanged()
-                }
+            for (listener in listeners) {
+                listener.onStateChanged()
             }
         }
 
@@ -201,7 +214,17 @@ class CallManager {
 
         fun swap() {
             if (calls.size > 1) {
-                calls.find { it.getStateCompat() == Call.STATE_HOLDING }?.unhold()
+                // Explicitly hold the active call first so the swap is atomic and
+                // reliable across all devices (some don't auto-hold on unhold).
+                val activeCall = getActiveCall()
+                val heldCall = getHeldCall()
+                if (activeCall != null && heldCall != null) {
+                    activeCall.hold()
+                    heldCall.unhold()
+                } else {
+                    // Fallback: just unhold whatever is held
+                    heldCall?.unhold()
+                }
             }
         }
 
@@ -249,6 +272,13 @@ interface CallManagerListener {
      * Default implementation is a no-op so existing listeners don't need to change.
      */
     fun onSecondCallArrived(call: Call) {}
+
+    /**
+     * Called when a previously RINGING call is removed (answered, rejected, or missed).
+     * Use this to stop the call-waiting tone regardless of how the ringing call ended.
+     * Default implementation is a no-op so existing listeners don't need to change.
+     */
+    fun onRingingCallEnded() {}
 }
 
 sealed class PhoneState

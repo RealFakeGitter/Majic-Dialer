@@ -14,9 +14,11 @@ import com.novadial.phone.extensions.keyguardManager
 import com.novadial.phone.extensions.powerManager
 import com.novadial.phone.helpers.CallAudioManager
 import com.novadial.phone.helpers.CallManager
+import com.novadial.phone.helpers.CallManagerListener
 import com.novadial.phone.helpers.CallNotificationManager
 import com.novadial.phone.helpers.NoCall
 import com.novadial.phone.helpers.RingtoneVolumeHelper
+import com.novadial.phone.models.AudioRoute
 import com.novadial.phone.models.Events
 import org.greenrobot.eventbus.EventBus
 import com.novadial.phone.helpers.CallLogWatcher
@@ -32,20 +34,36 @@ class CallService : InCallService() {
     override fun onCreate() {
         super.onCreate()
         CallLogWatcher.ensureRegistered(this)
+        CallManager.addListener(callManagerListener)
     }
 
+    // CallManagerListener: drives notification updates from CallManager's post-update
+    // state, ensuring the notification is always consistent with the call list.
+    private val callManagerListener = object : CallManagerListener {
+        override fun onStateChanged() {
+            callNotificationManager.setupNotification()
+        }
+
+        override fun onAudioStateChanged(audioState: AudioRoute) {
+            // handled directly in onCallAudioStateChanged() — no-op here to avoid double update
+        }
+
+        override fun onPrimaryCallChanged(call: Call) {
+            callNotificationManager.setupNotification()
+        }
+
+        override fun onRingingCallEnded() {
+            callNotificationManager.setupNotification()
+        }
+    }
+
+    // Per-call Call.Callback: handles only ringtone volume changes.
+    // Notification updates are driven by callManagerListener (above) which fires
+    // after CallManager has finished updating its call list — eliminating the race
+    // where setupNotification() would fire before the new call was in CallManager.
     private val callListener = object : Call.Callback() {
         override fun onStateChanged(call: Call, state: Int) {
             super.onStateChanged(call, state)
-            if (state == Call.STATE_DISCONNECTED || state == Call.STATE_DISCONNECTING) {
-                if (CallManager.getPhoneState() == NoCall) {
-                    callNotificationManager.cancelNotification()
-                } else {
-                    callNotificationManager.setupNotification()
-                }
-            } else {
-                callNotificationManager.setupNotification()
-            }
             RingtoneVolumeHelper.handleCallStateChanged(this@CallService, call)
         }
     }
@@ -129,6 +147,7 @@ class CallService : InCallService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        CallManager.removeListener(callManagerListener)
         callNotificationManager.cancelNotification()
         callAudioManager.release()
         RingtoneVolumeHelper.restoreVolume(this)
