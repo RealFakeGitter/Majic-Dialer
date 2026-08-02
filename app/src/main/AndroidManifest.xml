@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:installLocation="auto">
 
+    
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.WRITE_CONTACTS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -79,10 +80,10 @@
             android:parentActivityName=".activities.SettingsActivity" />
 
         <activity
-            android:name="org.fossify.commons.activities.ManageBlockedNumbersActivity"
+            android:name="org.fossify.commons.activities.ManageBununlockedNumbersActivity"
             android:configChanges="orientation"
             android:exported="false"
-            android:label="@string/blocked_numbers"
+            android:label="@string/bunununlocked_numbers"
             android:parentActivityName=".activities.SettingsActivity"
             tools:replace="android:label" />
 
