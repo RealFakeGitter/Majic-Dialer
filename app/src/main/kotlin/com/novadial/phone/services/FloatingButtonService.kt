@@ -30,7 +30,6 @@ class FloatingButtonService : Service() {
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-
         floatingView = LayoutInflater.from(this).inflate(R.layout.floating_button, null)
 
         params = WindowManager.LayoutParams(
@@ -45,13 +44,10 @@ class FloatingButtonService : Service() {
             y = 200
         }
 
-        windowManager?.addView(floatingView, params)
+        val button = floatingView!!.findViewById<ImageButton>(R.id.floating_button)
 
-        val button = floatingView?.findViewById<ImageButton>(R.id.floating_button)
-
-        // Drag + click handling on the whole view
-        floatingView?.setOnTouchListener { _, event ->
-            when (event.action) {
+        button.setOnTouchListener { _, event ->
+            when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
                     initialX = params.x
                     initialY = params.y
@@ -59,31 +55,34 @@ class FloatingButtonService : Service() {
                     initialTouchY = event.rawY
                     true
                 }
+
                 MotionEvent.ACTION_MOVE -> {
                     params.x = initialX + (event.rawX - initialTouchX).toInt()
                     params.y = initialY + (event.rawY - initialTouchY).toInt()
                     windowManager?.updateViewLayout(floatingView, params)
                     true
                 }
+
                 MotionEvent.ACTION_UP -> {
-                    // If the finger barely moved → treat as click
                     if (abs(event.rawX - initialTouchX) < 10 && abs(event.rawY - initialTouchY) < 10) {
-                        val intent = Intent(this, CallActivity::class.java).apply {
+                        startActivity(Intent(this, CallActivity::class.java).apply {
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-                        }
-                        startActivity(intent)
+                        })
                     }
                     true
                 }
+
                 else -> false
             }
         }
+
+        windowManager?.addView(floatingView, params)
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         floatingView?.let { windowManager?.removeView(it) }
         floatingView = null
         windowManager = null
+        super.onDestroy()
     }
 }
