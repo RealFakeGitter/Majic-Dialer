@@ -153,8 +153,11 @@ class FloatingButtonService : Service() {
     }
 
     private fun setDefaultIcon() {
-        floatingView?.findViewById<ImageButton>(R.id.floating_button)
-            ?.setImageResource(R.drawable.ic_phone_green_vector)
+        floatingView?.findViewById<ImageButton>(R.id.floating_button)?.apply {
+            setImageResource(R.drawable.ic_phone_green_vector)
+            clearColorFilter()
+            setColorFilter(resources.getColor(android.R.color.black, theme))
+        }
     }
 
     private fun snapToEdge() {
