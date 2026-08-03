@@ -97,7 +97,6 @@ class CallActivity : SimpleActivity() {
         updateTextColors(binding.callHolder)
         binding.callHolder.setBackgroundColor(getNovaBackgroundColor())
         initButtons()
-        audioManager.mode = AudioManager.MODE_IN_CALL
         addLockScreenFlags()
         CallManager.addListener(callCallback)
         updateCallContactInfo(CallManager.getPrimaryCall())
@@ -514,8 +513,10 @@ class CallActivity : SimpleActivity() {
         if (supportAudioRoutes.contains(AudioRoute.BLUETOOTH)) {
             createOrUpdateAudioRouteChooser(supportAudioRoutes)
         } else {
-            val isSpeakerOn = !isSpeakerOn
-            val newRoute = if (isSpeakerOn) CallAudioState.ROUTE_SPEAKER else CallAudioState.ROUTE_WIRED_OR_EARPIECE
+            val targetSpeakerOn = !isSpeakerOn
+            val targetRoute = if (targetSpeakerOn) AudioRoute.SPEAKER else AudioRoute.EARPIECE
+            updateCallAudioState(targetRoute)
+            val newRoute = if (targetSpeakerOn) CallAudioState.ROUTE_SPEAKER else CallAudioState.ROUTE_WIRED_OR_EARPIECE
             CallManager.setAudioRoute(newRoute)
         }
     }
@@ -1049,11 +1050,6 @@ class CallActivity : SimpleActivity() {
                 safeFinishAndRemoveTask()
             }
             return
-        }
-
-        try {
-            audioManager.mode = AudioManager.MODE_NORMAL
-        } catch (ignored: Exception) {
         }
 
         isCallEnded = true
