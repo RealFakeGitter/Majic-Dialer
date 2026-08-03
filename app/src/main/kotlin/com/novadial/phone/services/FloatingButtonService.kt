@@ -2,8 +2,15 @@ package com.novadial.phone.services
 
 import android.app.Service
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.PixelFormat
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
+import android.graphics.Rect
+import android.graphics.RectF
 import android.net.Uri
 import android.os.IBinder
 import android.provider.ContactsContract
@@ -17,6 +24,7 @@ import android.widget.ImageView
 import com.novadial.phone.R
 import com.novadial.phone.activities.CallActivity
 import kotlin.math.abs
+import kotlin.math.min
 
 class FloatingButtonService : Service() {
 
@@ -142,7 +150,7 @@ class FloatingButtonService : Service() {
                         val bitmap = BitmapFactory.decodeStream(stream)
                         if (bitmap != null) {
                             floatingView?.findViewById<ImageButton>(R.id.floating_button)?.apply {
-                                setImageBitmap(bitmap)
+                                setImageBitmap(getCircularBitmap(bitmap))
                                 background = null
                                 clearColorFilter()
                                 scaleType = ImageView.ScaleType.CENTER_CROP
@@ -155,6 +163,25 @@ class FloatingButtonService : Service() {
         }
 
         setDefaultIcon()
+    }
+
+    private fun getCircularBitmap(srcBitmap: Bitmap): Bitmap {
+        val size = min(srcBitmap.width, srcBitmap.height)
+        val squareBitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(squareBitmap)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+        val rect = Rect(0, 0, size, size)
+        val rectF = RectF(rect)
+
+        canvas.drawOval(rectF, paint)
+        paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
+
+        val left = (srcBitmap.width - size) / 2
+        val top = (srcBitmap.height - size) / 2
+        canvas.drawBitmap(srcBitmap, -left.toFloat(), -top.toFloat(), paint)
+
+        return squareBitmap
     }
 
     private fun setDefaultIcon() {
