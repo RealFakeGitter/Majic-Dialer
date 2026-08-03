@@ -3,7 +3,6 @@ package com.novadial.phone.activities
 import android.annotation.SuppressLint
 import android.net.Uri
 import android.provider.Settings
-import com.novadial.phone.services.FloatingButtonService
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
@@ -40,6 +39,7 @@ import com.novadial.phone.extensions.*
 import com.novadial.phone.helpers.*
 import com.novadial.phone.models.AudioRoute
 import com.novadial.phone.models.CallContact
+import com.novadial.phone.services.FloatingButtonService
 import kotlin.math.max
 import kotlin.math.min
 
