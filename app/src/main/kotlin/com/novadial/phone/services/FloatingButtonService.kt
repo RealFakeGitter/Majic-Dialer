@@ -46,15 +46,15 @@ class FloatingButtonService : Service() {
         floatingView = LayoutInflater.from(this).inflate(R.layout.floating_button, null)
 
         params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
+            dp(40),
+            dp(40),
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = 50
-            y = 200
+            x = dp(20)
+            y = dp(120)
             alpha = 0.65f
         }
 
@@ -207,6 +207,9 @@ class FloatingButtonService : Service() {
 
         windowManager?.updateViewLayout(floatingView, params)
     }
+
+    private fun dp(value: Int): Int =
+        (value * resources.displayMetrics.density).toInt()
 
     override fun onDestroy() {
         floatingView?.let { windowManager?.removeView(it) }
