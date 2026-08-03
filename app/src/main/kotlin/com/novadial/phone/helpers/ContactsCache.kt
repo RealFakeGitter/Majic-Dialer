@@ -15,6 +15,13 @@ object ContactsCache {
     private var observerRegistered = false
     private const val TAG = "ContactsCache"
 
+    fun getContactByNumber(number: String): Contact? {
+        val list = cachedContacts ?: return null
+        val normalized = number.trim()
+        if (normalized.isEmpty()) return null
+        return list.firstOrNull { it.doesHavePhoneNumber(normalized) }
+    }
+
     fun getContacts(context: Context, forceRefresh: Boolean = false, callback: (MutableList<Contact>) -> Unit) {
         if (!forceRefresh && cachedContacts != null) {
             Log.d(TAG, "[CONTACT_CACHE_HIT] Returning ${cachedContacts?.size} cached contacts")

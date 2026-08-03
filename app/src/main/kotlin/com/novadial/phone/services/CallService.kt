@@ -16,6 +16,7 @@ import com.novadial.phone.helpers.CallAudioManager
 import com.novadial.phone.helpers.CallManager
 import com.novadial.phone.helpers.CallManagerListener
 import com.novadial.phone.helpers.CallNotificationManager
+import com.novadial.phone.helpers.ContactsCache
 import com.novadial.phone.helpers.NoCall
 import com.novadial.phone.helpers.RingtoneVolumeHelper
 import com.novadial.phone.models.AudioRoute
@@ -35,6 +36,7 @@ class CallService : InCallService() {
         super.onCreate()
         CallLogWatcher.ensureRegistered(this)
         CallManager.addListener(callManagerListener)
+        ContactsCache.getContacts(this) { /* preload cache in background */ }
     }
 
     // CallManagerListener: drives notification updates from CallManager's post-update
@@ -57,19 +59,26 @@ class CallService : InCallService() {
         }
     }
 
-    // Per-call Call.Callback: handles only ringtone volume changes.
-    // Notification updates are driven by callManagerListener (above) which fires
-    // after CallManager has finished updating its call list — eliminating the race
-    // where setupNotification() would fire before the new call was in CallManager.
+    // Per-call Call.Callback: handles ringtone volume changes and immediate notification updates.
     private val callListener = object : Call.Callback() {
         override fun onStateChanged(call: Call, state: Int) {
             super.onStateChanged(call, state)
             RingtoneVolumeHelper.handleCallStateChanged(this@CallService, call)
+            if (state == Call.STATE_DISCONNECTED) {
+                if (CallManager.getPhoneState() == NoCall) {
+                    callNotificationManager.cancelNotification()
+                } else {
+                    callNotificationManager.setupNotification()
+                }
+            } else if (state == Call.STATE_DIALING || state == Call.STATE_CONNECTING || state == Call.STATE_ACTIVE) {
+                callNotificationManager.setupNotification()
+            }
         }
     }
 
     override fun onCallAdded(call: Call) {
         super.onCallAdded(call)
+        ContactsCache.getContacts(this) { /* ensure cache is warming */ }
         CallManager.onCallAdded(call)
         CallManager.inCallService = this
         call.registerCallback(callListener)

@@ -41,6 +41,7 @@ class CallNotificationManager(private val context: Context) {
     private var lastPostedCallHandle: String? = null
     private var lastPostedContact: CallContact? = null
     private var lastPostedAvatar: Bitmap? = null
+    private val createdChannels = mutableSetOf<String>()
 
     @SuppressLint("NewApi")
     fun setupNotification(lowPriority: Boolean = false) {
@@ -254,6 +255,7 @@ class CallNotificationManager(private val context: Context) {
     }
 
     fun createNotificationChannel(isHighPriority: Boolean, channelId: String) {
+        if (createdChannels.contains(channelId)) return
         val name = if (isHighPriority) {
             context.getString(R.string.call_notification_channel_high_priority)
         } else {
@@ -265,6 +267,7 @@ class CallNotificationManager(private val context: Context) {
             setSound(null, null)
             notificationManager.createNotificationChannel(this)
         }
+        createdChannels.add(channelId)
     }
 
     fun cancelNotification() {
