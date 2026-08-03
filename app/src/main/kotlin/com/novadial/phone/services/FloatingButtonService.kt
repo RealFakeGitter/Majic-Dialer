@@ -101,6 +101,11 @@ class FloatingButtonService : Service() {
         }
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        updateContactPhoto(intent?.getStringExtra("phone_number"))
+        return START_STICKY
+    }
+
     fun updateContactPhoto(phoneNumber: String?) {
         if (phoneNumber.isNullOrBlank()) {
             setDefaultIcon()
@@ -149,7 +154,7 @@ class FloatingButtonService : Service() {
 
     private fun setDefaultIcon() {
         floatingView?.findViewById<ImageButton>(R.id.floating_button)
-            ?.setImageResource(R.drawable.ic_phone)
+            ?.setImageResource(R.drawable.ic_phone_green_vector)
     }
 
     private fun snapToEdge() {
