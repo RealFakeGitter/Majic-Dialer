@@ -46,8 +46,8 @@ class FloatingButtonService : Service() {
         floatingView = LayoutInflater.from(this).inflate(R.layout.floating_button, null)
 
         params = WindowManager.LayoutParams(
-            dp(40),
-            dp(40),
+            dp(56),
+            dp(56),
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
