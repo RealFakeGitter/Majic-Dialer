@@ -111,91 +111,113 @@ class FloatingButtonService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        updateContactPhoto(intent?.getStringExtra("phone_number"))
+        try {
+            updateContactPhoto(intent?.getStringExtra("phone_number"))
+        } catch (_: Exception) {
+            setDefaultIcon()
+        }
         return START_STICKY
     }
 
     fun updateContactPhoto(phoneNumber: String?) {
-        if (phoneNumber.isNullOrBlank()) {
-            setDefaultIcon()
-            return
-        }
+        try {
+            if (phoneNumber.isNullOrBlank()) {
+                setDefaultIcon()
+                return
+            }
 
-        val uri = Uri.withAppendedPath(
-            ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-            Uri.encode(phoneNumber)
-        )
+            val uri = Uri.withAppendedPath(
+                ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
+                Uri.encode(phoneNumber)
+            )
 
-        val projection = arrayOf(
-            ContactsContract.PhoneLookup.PHOTO_URI,
-            ContactsContract.PhoneLookup._ID
-        )
+            val projection = arrayOf(
+                ContactsContract.PhoneLookup.PHOTO_URI,
+                ContactsContract.PhoneLookup._ID
+            )
 
-        contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
-            if (cursor.moveToFirst()) {
-                val photoUriString = cursor.getString(0)
-                val contactId = cursor.getLong(1)
+            var updated = false
 
-                val photoUri = when {
-                    !photoUriString.isNullOrBlank() -> Uri.parse(photoUriString)
-                    contactId > 0 -> Uri.withAppendedPath(
-                        ContactsContract.Contacts.CONTENT_URI,
-                        contactId.toString()
-                    ).buildUpon().appendPath(ContactsContract.Contacts.Photo.CONTENT_DIRECTORY).build()
-                    else -> null
-                }
+            contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val photoUriString = cursor.getString(0)
+                    val contactId = cursor.getLong(1)
 
-                if (photoUri != null) {
-                    contentResolver.openInputStream(photoUri)?.use { stream ->
-                        val bitmap = BitmapFactory.decodeStream(stream)
-                        if (bitmap != null) {
-                            floatingView?.findViewById<ImageButton>(R.id.floating_button)?.apply {
-                                setImageBitmap(getCircularBitmap(bitmap))
-                                background = null
-                                clearColorFilter()
-                                scaleType = ImageView.ScaleType.CENTER_CROP
+                    val photoUri = when {
+                        !photoUriString.isNullOrBlank() -> Uri.parse(photoUriString)
+                        contactId > 0 -> Uri.withAppendedPath(
+                            ContactsContract.Contacts.CONTENT_URI,
+                            contactId.toString()
+                        ).buildUpon().appendPath(ContactsContract.Contacts.Photo.CONTENT_DIRECTORY).build()
+                        else -> null
+                    }
+
+                    if (photoUri != null) {
+                        contentResolver.openInputStream(photoUri)?.use { stream ->
+                            val bitmap = BitmapFactory.decodeStream(stream)
+                            if (bitmap != null) {
+                                floatingView?.findViewById<ImageButton>(R.id.floating_button)?.apply {
+                                    setImageBitmap(getCircularThumbnail(bitmap, dp(56)))
+                                    background = null
+                                    clearColorFilter()
+                                    scaleType = ImageView.ScaleType.CENTER_CROP
+                                }
+                                updated = true
                             }
-                            return
                         }
                     }
                 }
             }
-        }
 
-        setDefaultIcon()
+            if (!updated) setDefaultIcon()
+        } catch (_: Exception) {
+            setDefaultIcon()
+        }
     }
 
-    private fun getCircularBitmap(srcBitmap: Bitmap): Bitmap {
+    private fun getCircularThumbnail(srcBitmap: Bitmap, targetSize: Int): Bitmap {
         val size = min(srcBitmap.width, srcBitmap.height)
-        val squareBitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(squareBitmap)
+        val square = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val squareCanvas = Canvas(square)
+        val squarePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+        val srcRect = Rect(
+            (srcBitmap.width - size) / 2,
+            (srcBitmap.height - size) / 2,
+            (srcBitmap.width - size) / 2 + size,
+            (srcBitmap.height - size) / 2 + size
+        )
+        val dstRect = Rect(0, 0, size, size)
+
+        squareCanvas.drawBitmap(srcBitmap, srcRect, dstRect, squarePaint)
+
+        val output = Bitmap.createBitmap(targetSize, targetSize, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(output)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-        val rect = Rect(0, 0, size, size)
+        val rect = Rect(0, 0, targetSize, targetSize)
         val rectF = RectF(rect)
 
         canvas.drawOval(rectF, paint)
         paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
 
-        val left = (srcBitmap.width - size) / 2
-        val top = (srcBitmap.height - size) / 2
-        canvas.drawBitmap(srcBitmap, -left.toFloat(), -top.toFloat(), paint)
+        val scaledSquare = Bitmap.createScaledBitmap(square, targetSize, targetSize, true)
+        canvas.drawBitmap(scaledSquare, 0f, 0f, paint)
 
-        return squareBitmap
+        return output
     }
 
     private fun setDefaultIcon() {
-    floatingView?.findViewById<ImageButton>(R.id.floating_button)?.apply {
-        try {
-            setImageDrawable(packageManager.getApplicationIcon(packageName))
-        } catch (_: Exception) {
-            setImageResource(R.mipmap.ic_launcher)
+        floatingView?.findViewById<ImageButton>(R.id.floating_button)?.apply {
+            try {
+                setImageDrawable(packageManager.getApplicationIcon(packageName))
+            } catch (_: Exception) {
+                setImageResource(R.mipmap.ic_launcher)
+            }
+            background = null
+            clearColorFilter()
+            scaleType = ImageView.ScaleType.CENTER_INSIDE
         }
-        background = null
-        clearColorFilter()
-        scaleType = ImageView.ScaleType.CENTER_INSIDE
-    }
-}
     }
 
     private fun snapToEdge() {
