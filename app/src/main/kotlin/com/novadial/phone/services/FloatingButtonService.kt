@@ -13,6 +13,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageButton
+import android.widget.ImageView
 import com.novadial.phone.R
 import com.novadial.phone.activities.CallActivity
 import kotlin.math.abs
@@ -140,8 +141,12 @@ class FloatingButtonService : Service() {
                     contentResolver.openInputStream(photoUri)?.use { stream ->
                         val bitmap = BitmapFactory.decodeStream(stream)
                         if (bitmap != null) {
-                            floatingView?.findViewById<ImageButton>(R.id.floating_button)
-                                ?.setImageBitmap(bitmap)
+                            floatingView?.findViewById<ImageButton>(R.id.floating_button)?.apply {
+                                setImageBitmap(bitmap)
+                                background = null
+                                clearColorFilter()
+                                scaleType = ImageView.ScaleType.CENTER_CROP
+                            }
                             return
                         }
                     }
@@ -157,6 +162,8 @@ class FloatingButtonService : Service() {
             setImageResource(R.drawable.ic_phone_green_vector)
             clearColorFilter()
             setColorFilter(resources.getColor(android.R.color.black, theme))
+            background = null
+            scaleType = ImageView.ScaleType.CENTER_INSIDE
         }
     }
 
