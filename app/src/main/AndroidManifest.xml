@@ -208,6 +208,11 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name=".services.FloatingButtonService"
+            android:enabled="true"
+            android:exported="false" />
+
         <receiver
             android:name=".receivers.CallActionReceiver"
             android:enabled="true"
