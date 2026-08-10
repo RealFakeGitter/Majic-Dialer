@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.konan.properties.Properties
 import java.io.FileInputStream
 
 plugins {
-    alias(libs.plugins.android)
+    id("com.android.application")
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.detekt)
     id("org.jetbrains.kotlin.plugin.compose") version libs.versions.kotlin.get()
@@ -32,7 +32,7 @@ android {
     compileSdk = project.libs.versions.app.build.compileSDKVersion.get().toInt()
 
     defaultConfig {
-        applicationId = project.property("APP_ID").toString() // Set the application ID from gradle.properties
+        applicationId = project.property("APP_ID").toString()
         minSdk = project.libs.versions.app.build.minimumSDK.get().toInt()
         targetSdk = project.libs.versions.app.build.targetSDK.get().toInt()
         versionName = project.property("VERSION_NAME").toString()
@@ -89,11 +89,13 @@ android {
         register("gplay")
     }
 
-sourceSets {
-    getByName("main") {
-        manifest.srcFile("src/main/AndroidManifest.xml")
+    sourceSets {
+        main {
+            manifest.srcFile("src/main/AndroidManifest.xml")
+            java.srcDirs = listOf("src/main/java")
+            res.srcDirs = listOf("src/main/res")
+        }
     }
-}
 
     compileOptions {
         val currentJavaVersionFromLibs =
@@ -117,7 +119,7 @@ sourceSets {
         )
     }
 
-    namespace = "com.novadial.phone" // Force the namespace to stay the old one
+    namespace = "com.novadial.phone"
 
     lint {
         checkReleaseBuilds = false
@@ -152,7 +154,6 @@ dependencies {
     implementation("com.google.zxing:core:3.5.3")
     detektPlugins(libs.compose.detekt)
 
-    // Jetpack Compose dependencies for custom About page compilation
     implementation(platform("androidx.compose:compose-bom:2024.04.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
