@@ -93,11 +93,10 @@ android {
 sourceSets {
     getByName("main") {
         manifest.srcFile("src/main/AndroidManifest.xml")
-        java.directories.add(file("src/main/java"))
-        res.directories.add(file("src/main/res"))
+        java.directories.add(file("src/main/java").path)
+        res.directories.add(file("src/main/res").path)
     }
 }
-
     compileOptions {
         val currentJavaVersionFromLibs =
             JavaVersion.valueOf(libs.versions.app.build.javaVersion.get())
