@@ -32,7 +32,7 @@ android {
     compileSdk = project.libs.versions.app.build.compileSDKVersion.get().toInt()
 
     defaultConfig {
-        applicationId = "com.majic.dialer"
+        applicationId = project.property("APP_ID").toString() // Set the application ID from gradle.properties
         minSdk = project.libs.versions.app.build.minimumSDK.get().toInt()
         targetSdk = project.libs.versions.app.build.targetSDK.get().toInt()
         versionName = project.property("VERSION_NAME").toString()
@@ -115,7 +115,7 @@ android {
         )
     }
 
-    namespace = "com.majic.dialer"
+    namespace = "com.novadial.phone" // Force the namespace to stay the old one
 
     lint {
         checkReleaseBuilds = false
@@ -160,4 +160,3 @@ dependencies {
     implementation("androidx.compose.ui:ui-viewbinding")
     implementation("androidx.activity:activity-compose:1.9.0")
 }
-
