@@ -1,11 +1,13 @@
 plugins {
-    alias(libs.plugins.android).apply(false)
+    alias(libs.plugins.android).apply(true) // Apply the Android plugin
     alias(libs.plugins.kotlinSerialization).apply(false)
     alias(libs.plugins.detekt).apply(false)
 }
 
 android {
     // Other Android configurations...
+
+    compileSdk = 34 // Specify the compileSdk version
 
     defaultConfig {
         // Other default configurations...
