@@ -90,7 +90,7 @@ android {
     }
 
     sourceSets {
-        main {
+        getByName("main") {
             manifest.srcFile("src/main/AndroidManifest.xml")
             java.srcDirs = listOf("src/main/java")
             res.srcDirs = listOf("src/main/res")
