@@ -89,13 +89,15 @@ android {
         register("gplay")
     }
 
-    sourceSets {
-        getByName("main") {
-            manifest.srcFile("src/main/AndroidManifest.xml")
-            java.directories = mutableSetOf(file("src/main/java"))
-            res.directories = mutableSetOf(file("src/main/res"))
-        }
+   sourceSets {
+    getByName("main") {
+        manifest.srcFile("src/main/AndroidManifest.xml")
+        var java: SourceSet = this
+        java.directories = mutableSetOf(file("src/main/java"))
+        var res: SourceSet = this
+        res.directories = mutableSetOf(file("src/main/res"))
     }
+}
 
     compileOptions {
         val currentJavaVersionFromLibs =
