@@ -20,4 +20,11 @@ android {
     kotlin {
         namespace = "com.novadial.phone"
     }
+
+    // Ensure the manifest file is correctly referenced
+    sourceSets {
+        main {
+            manifest.srcFile("src/main/AndroidManifest.xml")
+        }
+    }
 }
