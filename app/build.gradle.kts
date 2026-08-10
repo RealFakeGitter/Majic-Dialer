@@ -89,9 +89,11 @@ android {
         register("gplay")
     }
 
-    sourceSets {
-        getByName("main").java.directories.add("src/main/kotlin")
+sourceSets {
+    getByName("main") {
+        manifest.srcFile("src/main/AndroidManifest.xml")
     }
+}
 
     compileOptions {
         val currentJavaVersionFromLibs =
