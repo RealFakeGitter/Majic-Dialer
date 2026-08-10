@@ -92,8 +92,8 @@ android {
     sourceSets {
         getByName("main") {
             manifest.srcFile("src/main/AndroidManifest.xml")
-            java.srcDirs = listOf("src/main/java")
-            res.srcDirs = listOf("src/main/res")
+            java.directories = mutableSetOf(file("src/main/java"))
+            res.directories = mutableSetOf(file("src/main/res"))
         }
     }
 
