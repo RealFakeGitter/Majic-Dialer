@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.konan.properties.Properties
 import java.io.FileInputStream
+import com.android.build.gradle.internal.dsl.AndroidSourceSet
 
 plugins {
     id("com.android.application")
@@ -89,7 +90,7 @@ android {
         register("gplay")
     }
 
-   sourceSets {
+sourceSets {
     getByName("main") {
         manifest.srcFile("src/main/AndroidManifest.xml")
         val java = this as AndroidSourceSet
