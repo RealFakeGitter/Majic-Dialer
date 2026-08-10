@@ -92,13 +92,12 @@ android {
    sourceSets {
     getByName("main") {
         manifest.srcFile("src/main/AndroidManifest.xml")
-        var java: SourceSet = this
-        java.directories = mutableSetOf(file("src/main/java"))
-        var res: SourceSet = this
-        res.directories = mutableSetOf(file("src/main/res"))
+        val java = this as AndroidSourceSet
+        java.directories.set(mutableSetOf(file("src/main/java")))
+        val res = this as AndroidSourceSet
+        res.directories.set(mutableSetOf(file("src/main/res")))
     }
 }
-
     compileOptions {
         val currentJavaVersionFromLibs =
             JavaVersion.valueOf(libs.versions.app.build.javaVersion.get())
