@@ -5,23 +5,16 @@ plugins {
 }
 
 android {
-    // Other Android configurations...
-
     compileSdk = 34 // Specify the compileSdk version
 
     defaultConfig {
-        // Other default configurations...
-
-        // Set the application ID
         applicationId = project.property("APP_ID").toString()
     }
 
-    // Force the namespace to stay the old one
     kotlin {
         namespace = "com.novadial.phone"
     }
 
-    // Ensure the manifest file is correctly referenced
     sourceSets {
         main {
             manifest.srcFile("src/main/AndroidManifest.xml")
