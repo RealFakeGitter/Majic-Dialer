@@ -2,10 +2,9 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.konan.properties.Properties
 import java.io.FileInputStream
-import com.android.build.gradle.internal.dsl.AndroidSourceSet
 
 plugins {
-    id("com.android.application")
+    alias(libs.plugins.android)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.detekt)
     id("org.jetbrains.kotlin.plugin.compose") version libs.versions.kotlin.get()
@@ -90,13 +89,10 @@ android {
         register("gplay")
     }
 
-sourceSets {
-    getByName("main") {
-        manifest.srcFile("src/main/AndroidManifest.xml")
-        java.directories.add(file("src/main/java").path)
-        res.directories.add(file("src/main/res").path)
+    sourceSets {
+        getByName("main").java.directories.add("src/main/kotlin")
     }
-}
+
     compileOptions {
         val currentJavaVersionFromLibs =
             JavaVersion.valueOf(libs.versions.app.build.javaVersion.get())
@@ -119,6 +115,7 @@ sourceSets {
         )
     }
 
+    // Keep namespace as the original package so R / BuildConfig / databinding stay correct
     namespace = "com.novadial.phone"
 
     lint {
